@@ -4,12 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import edu.sc.seis.fissuresUtil.bag.Cut;
 import edu.sc.seis.sod.model.common.FissuresException;
 import edu.sc.seis.sod.model.common.MicroSecondDate;
 import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
-import edu.sc.seis.sod.model.common.Time;
-import edu.sc.seis.sod.model.common.TimeInterval;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.seismogram.EncodedData;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
@@ -78,11 +75,11 @@ public class ReduceTool {
     public static List<RequestFilter> trimTo(List<RequestFilter> rfList, List<RequestFilter> windowList) {
         List<RequestFilter> out = new ArrayList<RequestFilter>();
         for (RequestFilter window : windowList) {
-            Time windowStart = window.start_time;
-            Time windowEnd = window.end_time;
+            MicroSecondDate windowStart = window.start_time;
+            MicroSecondDate windowEnd = window.end_time;
             for (RequestFilter rf : rfList) {
-                Time rfStart = rf.start_time;
-                Time rfEnd = rf.end_time;
+                MicroSecondDate rfStart = rf.start_time;
+                MicroSecondDate rfEnd = rf.end_time;
                 if ((rfStart.after(windowStart) || rfStart.equals(windowStart))
                         && (rfEnd.before(windowEnd) || rfEnd.equals(windowEnd))) {
                     // good, totally contained
