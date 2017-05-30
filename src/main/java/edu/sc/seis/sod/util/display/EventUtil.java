@@ -27,17 +27,9 @@ public class EventUtil {
     /**
      * This gets around the NoPreferredOrigin exception
      */
+    @Deprecated
     public static OriginImpl extractOrigin(CacheEvent ev) {
-        try {
-            return (OriginImpl)ev.get_preferred_origin();
-        } catch(NoPreferredOrigin e) {
-            logger.info("No preferred origin in event.  Trying get_origins instead");
-            OriginImpl[] oArray = ev.get_origins();
-            if(oArray.length > 0) {
-                return (OriginImpl)oArray[0];
-            }
-            throw new RuntimeException("No preferred origin", e);
-        }
+        return ev.extractOrigin();
     }
 
     public static Magnitude[] sortByValue(Magnitude[] mags) {
