@@ -4,12 +4,12 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.CodecException;
-import edu.sc.seis.fissuresUtil.bag.DistAz;
 import edu.sc.seis.seisFile.sac.Complex;
 import edu.sc.seis.seisFile.sac.SacConstants;
 import edu.sc.seis.seisFile.sac.SacHeader;
 import edu.sc.seis.seisFile.sac.SacPoleZero;
 import edu.sc.seis.seisFile.sac.SacTimeSeries;
+import edu.sc.seis.sod.model.common.DistAz;
 import edu.sc.seis.sod.model.common.FissuresException;
 import edu.sc.seis.sod.model.common.ISOTime;
 import edu.sc.seis.sod.model.common.MicroSecondDate;
