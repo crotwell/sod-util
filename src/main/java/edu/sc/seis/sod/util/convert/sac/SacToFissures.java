@@ -99,7 +99,7 @@ public class SacToFissures {
                     .divideBy(period)
                     .getValue();
             if(Math.abs(error) > 0.01) {
-                seis.begin_time = new Time(beginTime);
+                seis.begin_time = beginTime;
             } // end of if (error > 0.01)
         } // end of if (sac.b != -12345)
         return seis;
@@ -115,7 +115,6 @@ public class SacToFissures {
     public static SeismogramAttrImpl getSeismogramAttr(SacTimeSeries sac)
     throws FissuresException {
         MicroSecondDate beginTime = getSeismogramBeginTime(sac);
-        Time time = new Time(beginTime);
         ChannelId chanId = getChannelId(sac);
         String evtName = "   ";
         SacHeader header = sac.getHeader();
@@ -138,9 +137,9 @@ public class SacToFissures {
         // seis id can be anything, so set to net:sta:site:chan:begin
         String seisId = chanId.network_id.network_code + ":"
                 + chanId.station_code + ":" + chanId.site_code + ":"
-                + chanId.channel_code + ":" + time.getISOString();
+                + chanId.channel_code + ":" + beginTime.getISOString();
         return new SeismogramAttrImpl(seisId,
-                                       time,
+                                       beginTime,
                                        sac.getHeader().getNpts(),
                                        new SamplingImpl(1,
                                                         new TimeInterval(sac.getHeader().getDelta(),
@@ -166,7 +165,6 @@ public class SacToFissures {
 
     public static ChannelId getChannelId(SacHeader header, String siteCode) {
         MicroSecondDate nzTime = getNZTime(header);
-        Time fisTime = new Time(nzTime);
         String netCode = "XX";
         if( ! SacConstants.isUndef(header.getKnetwk())) {
             netCode = header.getKnetwk().trim().toUpperCase();
@@ -184,12 +182,12 @@ public class SacToFissures {
                 chanCode = chanCode.substring(2, 5);
             }
         }
-        NetworkId netId = new NetworkId(netCode, fisTime);
+        NetworkId netId = new NetworkId(netCode, nzTime);
         ChannelId id = new ChannelId(netId,
                                      staCode,
                                      siteCode,
                                      chanCode,
-                                     fisTime);
+                                     nzTime);
         return id;
     }
 
@@ -342,7 +340,7 @@ public class SacToFissures {
                                                         * Integer.MAX_VALUE),
                                         "",
                                         "",
-                                        new Time(beginTime),
+                                        beginTime,
                                         loc,
                                         new Magnitude[0],
                                         new ParameterRef[0]);

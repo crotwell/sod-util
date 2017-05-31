@@ -34,7 +34,6 @@ import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
 import edu.sc.seis.sod.model.common.ParameterRef;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
-import edu.sc.seis.sod.model.common.Time;
 import edu.sc.seis.sod.model.common.TimeInterval;
 import edu.sc.seis.sod.model.common.UnitBase;
 import edu.sc.seis.sod.model.common.UnitImpl;
@@ -445,11 +444,12 @@ public class FissuresConvert {
         String isoTime = getISOTime(header.getStartBtime());
         // the network id isn't correct, but network start is not stored
         // in miniseed
-        ChannelId channelId = new ChannelId(new NetworkId(header.getNetworkCode().trim(), new Time(isoTime)),
+        MicroSecondDate time = new MicroSecondDate(isoTime);
+        ChannelId channelId = new ChannelId(new NetworkId(header.getNetworkCode().trim(), time),
                                             header.getStationIdentifier().trim(),
                                             edu.sc.seis.seisFile.fdsnws.stationxml.Channel.fixLocCode(header.getLocationIdentifier()), 
                                             header.getChannelIdentifier().trim(),
-                                            new Time(isoTime));
+                                            time);
         String seisId = channelId.network_id.network_code + ":" + channelId.station_code + ":" + channelId.site_code
                 + ":" + channelId.channel_code + ":" + getISOTime(header.getStartBtime());
         Property[] props = new Property[1];
@@ -458,7 +458,7 @@ public class FissuresConvert {
         TimeSeriesDataSel bits = convertData(seed);
         return new LocalSeismogramImpl(seisId,
                                        props,
-                                       new Time(isoTime),
+                                       time,
                                        header.getNumSamples(),
                                        sampling,
                                        UnitImpl.COUNT,
@@ -473,11 +473,11 @@ public class FissuresConvert {
         List<DataRecord> out = new ArrayList<DataRecord>();
         int seqStart = 0;
         for (PlottableChunk chunk : chunkList) {
-            ChannelId chan = new ChannelId(new NetworkId(chunk.getNetworkCode(), new Time(chunk.getBeginTime())),
+            ChannelId chan = new ChannelId(new NetworkId(chunk.getNetworkCode(), chunk.getBeginTime()),
                                            chunk.getStationCode(),
                                            chunk.getSiteCode(),
                                            chunk.getChannelCode(),
-                                           new Time(chunk.getBeginTime()));
+                                           chunk.getBeginTime());
             SamplingImpl samp = new SamplingImpl(chunk.getPixelsPerDay()*2, DAY);
             List<DataRecord> drList = toMSeed(toEncodedData(chunk.getYData()),
                                                             chan,

@@ -16,7 +16,6 @@ import com.isti.util.updatechecker.XMLUpdateCheckerClient;
 import com.isti.util.updatechecker.XMLUpdateCheckerServer;
 
 import edu.sc.seis.sod.model.common.MicroSecondDate;
-import edu.sc.seis.sod.model.common.Time;
 import edu.sc.seis.sod.model.common.TimeInterval;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.util.exceptionHandler.GlobalExceptionHandler;
@@ -153,7 +152,7 @@ public class UpdateCheckerJob implements Runnable {
         if ( usePrefs) {
             MicroSecondDate now = ClockUtil.now();
             String nextCheckDate = getPrefs().get(prefsName, now.subtract(SIX_HOUR).getISOString());
-            return new MicroSecondDate(new Time(nextCheckDate));
+            return new MicroSecondDate(nextCheckDate);
         } else {
             return ClockUtil.now().subtract(SIX_HOUR);
         }
