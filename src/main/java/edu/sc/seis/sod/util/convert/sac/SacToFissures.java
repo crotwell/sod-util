@@ -19,7 +19,6 @@ import edu.sc.seis.sod.model.common.Orientation;
 import edu.sc.seis.sod.model.common.ParameterRef;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
-import edu.sc.seis.sod.model.common.Time;
 import edu.sc.seis.sod.model.common.TimeInterval;
 import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.UnitImpl;
