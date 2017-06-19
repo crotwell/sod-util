@@ -15,7 +15,7 @@ public class StationXMLToSacPoleZero {
 
     /** converts to Sac PoleZero from a StationXML Response. 
      * @throws StationXMLException on bad unit conversion*/
-    public SacPoleZero convert(Response response) throws StationXMLException {
+    public static SacPoleZero convert(Response response) throws StationXMLException {
         ResponseStage first = response.getFirstStage();
         if (first.getResponseItem() instanceof PolesZeros) {
             throw new IllegalArgumentException("First Stage is not PolesZeros: "+first.getResponseItem().getClass().getSimpleName());
