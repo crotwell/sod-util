@@ -90,13 +90,15 @@ public class StationXMLToFissures {
         if (null == name || "".equals(name)) {
             name = "";
         }
-        return new StationImpl(new StationId(netAttr.getId(), xml.getCode(), effectiveTime.getBeginTime()),
+        StationImpl sta = new StationImpl(new StationId(netAttr.getId(), xml.getCode(), effectiveTime.getBeginTime()),
                                name,
                                new Location(xml.getLatitude().getValue(),
                                             xml.getLongitude().getValue(),
                                             convertFloatType(xml.getElevation()),
                                             new QuantityImpl(0, UnitImpl.METER),
                                             LocationType.GEOGRAPHIC), effectiveTime, UNKNOWN, UNKNOWN, UNKNOWN, netAttr);
+        sta.setEquipment(xml.getEquipmentList());
+        return sta;
     }
 
     public static List<StationChannelBundle> convert(Station xml,
@@ -189,6 +191,12 @@ public class StationXMLToFissures {
                                                         chanTimeRange,
                                                         station,
                                                         UNKNOWN));
+        // stationxml extra items
+        chan.setSensor(channel.getSensor());
+        chan.setPreAmplifier(channel.getPreAmplifier());
+        chan.setDataLogger(channel.getDataLogger());
+        chan.setEquipment(channel.getEquipment());
+        chan.setResponse(channel.getResponse());
         QuantityImpl sensitivity = null;
         if (channel.getResponse().getInstrumentSensitivity() != null
                 && channel.getResponse().getInstrumentSensitivity().getInputUnits() != null
