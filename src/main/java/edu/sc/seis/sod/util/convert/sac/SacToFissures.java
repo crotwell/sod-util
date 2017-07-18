@@ -207,8 +207,7 @@ public class SacToFissures {
         Location loc = new Location(header.getStla(),
                                     header.getStlo(),
                                     new QuantityImpl(header.getStel(), UnitImpl.METER),
-                                    new QuantityImpl(header.getStdp(), UnitImpl.METER),
-                                    LocationType.GEOGRAPHIC);
+                                    new QuantityImpl(header.getStdp(), UnitImpl.METER));
         Orientation orient = new Orientation(header.getCmpaz(), header.getCmpinc() - 90);
         SamplingImpl samp = new SamplingImpl(1,
                                              new TimeInterval(header.getDelta(),
@@ -324,15 +323,13 @@ public class SacToFissures {
                 loc = new Location(header.getEvla(),
                                    header.getEvlo(),
                                    new QuantityImpl(0, UnitImpl.METER),
-                                   new QuantityImpl(header.getEvdp(), UnitImpl.METER),
-                                   LocationType.GEOGRAPHIC);
+                                   new QuantityImpl(header.getEvdp(), UnitImpl.METER));
             } else {
                 loc = new Location(header.getEvla(),
                                    header.getEvlo(),
                                    new QuantityImpl(0, UnitImpl.METER),
                                    new QuantityImpl(header.getEvdp(),
-                                                    UnitImpl.KILOMETER),
-                                   LocationType.GEOGRAPHIC);
+                                                    UnitImpl.KILOMETER));
             } // end of else
             origins[0] = new OriginImpl("genid:"
                                                 + Math.round(Math.random()

@@ -95,8 +95,8 @@ public class StationXMLToFissures {
                                new Location(xml.getLatitude().getValue(),
                                             xml.getLongitude().getValue(),
                                             convertFloatType(xml.getElevation()),
-                                            new QuantityImpl(0, UnitImpl.METER),
-                                            LocationType.GEOGRAPHIC), effectiveTime, UNKNOWN, UNKNOWN, UNKNOWN, netAttr);
+                                            new QuantityImpl(0, UnitImpl.METER)),
+                               effectiveTime, UNKNOWN, UNKNOWN, UNKNOWN, netAttr);
         sta.setEquipment(xml.getEquipmentList());
         return sta;
     }
@@ -186,8 +186,7 @@ public class StationXMLToFissures {
                                                         new Location(channel.getLatitude().getValue(),
                                                                      channel.getLon().getValue(),
                                                                      convertFloatType(channel.getElevation()),
-                                                                     convertFloatType(channel.getDepth()),
-                                                                     LocationType.GEOGRAPHIC),
+                                                                     convertFloatType(channel.getDepth())),
                                                         chanTimeRange,
                                                         station,
                                                         UNKNOWN));
