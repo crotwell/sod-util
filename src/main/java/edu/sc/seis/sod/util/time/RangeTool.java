@@ -1,10 +1,14 @@
 package edu.sc.seis.sod.util.time;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
+import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
+import edu.sc.seis.sod.model.common.ISOTime;
 import edu.sc.seis.sod.model.common.MicroSecondDate;
 import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
 import edu.sc.seis.sod.model.common.TimeInterval;
+import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.common.UnsupportedFormat;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
@@ -30,15 +34,15 @@ public class RangeTool {
         String oneS = "one ";
         String twoS = "two ";
         try {
-            oneS += one.begin_time.getISOString();
-            twoS += two.begin_time.getISOString();
-            MicroSecondDate oneB = one.getBeginTime();
-            MicroSecondDate twoB = two.getBeginTime();
+            oneS += BaseNodeType.toISOString(one.begin_time);
+            twoS += BaseNodeType.toISOString(two.begin_time);
+            ZonedDateTime oneB = one.getBeginTime();
+            ZonedDateTime twoB = two.getBeginTime();
             
         } catch(UnsupportedFormat ee) {
             throw new RuntimeException(oneS+" "+twoS, ee);
         }
-        if (one.getBeginTime().before(two.getBeginTime())) {
+        if (one.getBeginTime().isBefore(two.getBeginTime())) {
             first = one;
             second = two;
         } else {
@@ -96,9 +100,9 @@ public class RangeTool {
 
     public static boolean areOverlapping(LocalSeismogramImpl one,
                                          LocalSeismogramImpl two) {
-        MicroSecondTimeRange oneTr = new MicroSecondTimeRange(one.getBeginTime(),
+        TimeRange oneTr = new TimeRange(one.getBeginTime(),
                                                               one.getEndTime());
-        MicroSecondTimeRange twoTr = new MicroSecondTimeRange(two.getBeginTime(),
+        TimeRange twoTr = new TimeRange(two.getBeginTime(),
                                                               two.getEndTime());
         return areOverlapping(oneTr, twoTr);
     }
@@ -111,14 +115,14 @@ public class RangeTool {
         if(seis.length == 0) {
             return ZERO_TIME;
         }
-        MicroSecondDate beginTime = SortTool.byBeginTimeAscending(seis)[0].getBeginTime();
-        MicroSecondDate endTime = new MicroSecondDate(0);
+        ZonedDateTime beginTime = SortTool.byBeginTimeAscending(seis)[0].getBeginTime();
+        ZonedDateTime endTime = ISOTime.wayPast;
         for(int i = 0; i < seis.length; i++) {
-            if(seis[i].getEndTime().after(endTime)) {
+            if(seis[i].getEndTime().isAfter(endTime)) {
                 endTime = seis[i].getEndTime();
             }
         }
-        return new MicroSecondTimeRange(beginTime, endTime);
+        return new TimeRange(beginTime, endTime);
     }
 
 

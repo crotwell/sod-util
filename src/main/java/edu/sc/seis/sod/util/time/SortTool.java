@@ -8,6 +8,7 @@ import java.util.List;
 import edu.sc.seis.sod.model.common.MicroSecondDate;
 import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
 import edu.sc.seis.sod.model.common.TimeInterval;
+import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
 import edu.sc.seis.sod.model.seismogram.PlottableChunk;
 import edu.sc.seis.sod.model.seismogram.RequestFilter;
@@ -71,7 +72,7 @@ public class SortTool {
     public static class SeisSizeSorter extends AscendingSizeSorter {
 
         public TimeInterval getInterval(Object o) {
-            return ((LocalSeismogramImpl)o).getTimeInterval();
+            return new TimeInterval(((LocalSeismogramImpl)o).getTimeInterval().toNanos(), UnitImpl.NANOSECOND);
         }
     }
 
@@ -96,7 +97,7 @@ public class SortTool {
     private static class SeisBeginSorter extends AscendingTimeSorter {
 
         public MicroSecondDate getTime(Object o) {
-            return ((LocalSeismogramImpl)o).getBeginTime();
+            return new MicroSecondDate(((LocalSeismogramImpl)o).getBeginTime());
         }
     }
 

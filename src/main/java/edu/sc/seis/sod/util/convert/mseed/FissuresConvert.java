@@ -10,6 +10,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.time.Duration;
+import java.time.Month;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -18,6 +21,7 @@ import java.util.List;
 import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.B1000Types;
+import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
 import edu.sc.seis.seisFile.mseed.Blockette;
 import edu.sc.seis.seisFile.mseed.Blockette100;
 import edu.sc.seis.seisFile.mseed.Blockette1000;
@@ -35,6 +39,7 @@ import edu.sc.seis.sod.model.common.ParameterRef;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
 import edu.sc.seis.sod.model.common.TimeInterval;
+import edu.sc.seis.sod.model.common.ToDoException;
 import edu.sc.seis.sod.model.common.UnitBase;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.seismogram.EncodedData;
@@ -48,6 +53,7 @@ import edu.sc.seis.sod.model.seismogram.TimeSeriesType;
 import edu.sc.seis.sod.model.station.ChannelId;
 import edu.sc.seis.sod.model.station.ChannelIdUtil;
 import edu.sc.seis.sod.model.station.NetworkId;
+import edu.sc.seis.sod.model.station.NetworkIdUtil;
 import edu.sc.seis.sod.util.display.IntRange;
 import edu.sc.seis.sod.util.display.SimplePlotUtil;
 import edu.sc.seis.sod.util.time.RangeTool;
@@ -232,10 +238,10 @@ public class FissuresConvert {
                         + eData[i].values.length + " " + (header.getSize() + b1000.getSize() + b100.getSize()));
             } // end of else
               // can fit into one record
-            header.setStationIdentifier(channel_id.station_code);
-            header.setLocationIdentifier(channel_id.site_code);
-            header.setChannelIdentifier(channel_id.channel_code);
-            header.setNetworkCode(channel_id.network_id.network_code);
+            header.setStationIdentifier(channel_id.getStationCode());
+            header.setLocationIdentifier(channel_id.getLocCode());
+            header.setChannelIdentifier(channel_id.getChannelCode());
+            header.setNetworkCode(channel_id.getNetworkId());
             header.setStartBtime(getBtime(start));
             header.setNumSamples((short)eData[i].num_points);
             TimeInterval sampPeriod = sampling_info.getPeriod();
@@ -433,8 +439,8 @@ public class FissuresConvert {
                 throw new RuntimeException("encoded data is null " + j);
             }
             seis.append_encoded(edata[j]);
-            MicroSecondDate drEnd = getMicroSecondTime(seed.getHeader().getLastSampleBtime());
-            seis.sampling_info = new SamplingImpl(seis.getNumPoints()-1, drEnd.subtract(seis.getBeginTime()));
+            ZonedDateTime drEnd = getZonedDateTime(seed.getLastSampleBtime());
+            seis.sampling_info = new SamplingImpl(seis.getNumPoints()-1, Duration.between(seis.getBeginTime(), drEnd));
         }
         return seis;
     }
@@ -444,14 +450,18 @@ public class FissuresConvert {
         String isoTime = getISOTime(header.getStartBtime());
         // the network id isn't correct, but network start is not stored
         // in miniseed
-        MicroSecondDate time = new MicroSecondDate(isoTime);
-        ChannelId channelId = new ChannelId(new NetworkId(header.getNetworkCode().trim(), time),
+        ZonedDateTime time = BaseNodeType.parseISOString(isoTime);
+        String netId = header.getNetworkCode();
+        if (NetworkIdUtil.isTemporary(netId)) {
+            netId = NetworkIdUtil.formId(netId, time);
+        }
+        ChannelId channelId = new ChannelId(netId,
                                             header.getStationIdentifier().trim(),
                                             edu.sc.seis.seisFile.fdsnws.stationxml.Channel.fixLocCode(header.getLocationIdentifier()), 
                                             header.getChannelIdentifier().trim(),
                                             time);
-        String seisId = channelId.network_id.network_code + ":" + channelId.station_code + ":" + channelId.site_code
-                + ":" + channelId.channel_code + ":" + getISOTime(header.getStartBtime());
+        String seisId = channelId.getNetworkId() + ":" + channelId.getStationCode() + ":" + channelId.getLocCode()
+                + ":" + channelId.getChannelCode() + ":" + getISOTime(header.getStartBtime());
         Property[] props = new Property[1];
         props[0] = new Property("Name", seisId);
         SamplingImpl sampling = convertSampleRate(seed);
@@ -473,11 +483,11 @@ public class FissuresConvert {
         List<DataRecord> out = new ArrayList<DataRecord>();
         int seqStart = 0;
         for (PlottableChunk chunk : chunkList) {
-            ChannelId chan = new ChannelId(new NetworkId(chunk.getNetworkCode(), chunk.getBeginTime()),
+            ChannelId chan = new ChannelId(NetworkIdUtil.formId(chunk.getNetworkCode(), chunk.getBeginTime()),
                                            chunk.getStationCode(),
                                            chunk.getSiteCode(),
                                            chunk.getChannelCode(),
-                                           chunk.getBeginTime());
+                                           chunk.getBeginTime().toZonedDateTime());
             SamplingImpl samp = new SamplingImpl(chunk.getPixelsPerDay()*2, DAY);
             List<DataRecord> drList = toMSeed(toEncodedData(chunk.getYData()),
                                                             chan,
@@ -518,12 +528,12 @@ public class FissuresConvert {
                                                    seis.getBeginTime());
         PlottableChunk chunk = new PlottableChunk(pData,
                                                   0,  //seisPixelRange.getMin()
-                                                  seis.getBeginTime(), 
+                                                  new MicroSecondDate(seis.getBeginTime()), 
                                                   pixelsPerDay,
-                                                  seis.getChannelID().network_id.network_code,
-                                                  seis.getChannelID().station_code,
-                                                  seis.getChannelID().site_code,
-                                                  seis.getChannelID().channel_code);
+                                                  seis.getChannelID().getNetworkId(),
+                                                  seis.getChannelID().getStationCode(),
+                                                  seis.getChannelID().getLocCode(),
+                                                  seis.getChannelID().getChannelCode());
         logger.debug("chunk "+ChannelIdUtil.toStringNoDates(seis.getChannelID())+" "+chunk.getBeginTime()+" "+chunk.getEndTime()+" "+chunk.getBeginPixel()+" "+chunk.getNumDataPoints()+" "+chunk.getNumPixels()+" "+chunk.getPixelsPerDay());
         return chunk;
     }
@@ -605,11 +615,6 @@ public class FissuresConvert {
         return eData;
     }
 
-    public static SeismogramAttrImpl convertAttributes(DataRecord seed) throws SeedFormatException {
-        // wasteful as this does the data as well...
-        return toFissures(seed);
-    }
-
     /**
      * get the value of start time in ISO format
      * 
@@ -622,6 +627,21 @@ public class FissuresConvert {
                                                             startStruct.hour,
                                                             startStruct.min,
                                                             fSecond);
+    }
+    
+    
+    public static ZonedDateTime getZonedDateTime(Btime startStruct) {
+        ZonedDateTime out = ZonedDateTime.of(startStruct.year,
+                                             Month.JANUARY.getValue(),
+                                             1,
+                                             startStruct.hour,
+                                             startStruct.min,
+                                             startStruct.sec,
+                                             startStruct.tenthMilli*100000,
+                                             BaseNodeType.TZ_UTC);
+        out = out.plusDays(startStruct.jday-1);
+        throw new ToDoException("leap seconds");
+        //return out;
     }
 
     /**

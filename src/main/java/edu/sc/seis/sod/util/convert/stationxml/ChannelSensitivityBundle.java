@@ -1,17 +1,17 @@
 package edu.sc.seis.sod.util.convert.stationxml;
 
+import edu.sc.seis.seisFile.fdsnws.stationxml.Channel;
 import edu.sc.seis.sod.model.common.QuantityImpl;
-import edu.sc.seis.sod.model.station.ChannelImpl;
 
 public class ChannelSensitivityBundle {
     
-    public ChannelSensitivityBundle(ChannelImpl chan, QuantityImpl sensitivity) {
+    public ChannelSensitivityBundle(Channel chan, QuantityImpl sensitivity) {
         super();
         this.chan = chan;
         this.sensitivity = sensitivity;
     }
 
-    public ChannelImpl getChan() {
+    public Channel getChan() {
         return chan;
     }
     
@@ -19,6 +19,6 @@ public class ChannelSensitivityBundle {
         return sensitivity;
     }
     
-    private ChannelImpl chan;
+    private Channel chan;
     private QuantityImpl sensitivity;
 }

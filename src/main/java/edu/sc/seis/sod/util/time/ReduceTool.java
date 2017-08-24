@@ -1,5 +1,6 @@
 package edu.sc.seis.sod.util.time;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,8 +41,8 @@ public class ReduceTool {
         SortTool.byLengthAscending(seis);
         List results = new ArrayList();
         for(int i = 0; i < seis.length; i++) {
-            MicroSecondDate iEnd = seis[i].getEndTime();
-            MicroSecondDate iBegin = seis[i].getBeginTime();
+            ZonedDateTime iEnd = seis[i].getEndTime();
+            ZonedDateTime iBegin = seis[i].getBeginTime();
             boolean contained = false;
             for(int j = i + 1; j < seis.length && !contained; j++) {
                 if(equalsOrAfter(iBegin, seis[j].getBeginTime())
@@ -238,7 +239,7 @@ public class ReduceTool {
             }
             LocalSeismogramImpl earlier = seis;
             LocalSeismogramImpl later = seis2;
-            if(seis2.getBeginTime().before(seis.getBeginTime())) {
+            if(seis2.getBeginTime().isBefore(seis.getBeginTime())) {
                 earlier = seis2;
                 later = seis;
             }
@@ -416,5 +417,15 @@ public class ReduceTool {
     public static boolean equalsOrBefore(MicroSecondDate first,
                                          MicroSecondDate second) {
         return first.equals(second) || first.before(second);
+    }
+
+    public static boolean equalsOrAfter(ZonedDateTime first,
+                                        ZonedDateTime second) {
+        return first.equals(second) || first.isAfter(second);
+    }
+
+    public static boolean equalsOrBefore(ZonedDateTime first,
+                                         ZonedDateTime second) {
+        return first.equals(second) || first.isBefore(second);
     }
 }

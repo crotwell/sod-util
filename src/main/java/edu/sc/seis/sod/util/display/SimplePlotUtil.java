@@ -2,6 +2,7 @@ package edu.sc.seis.sod.util.display;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.CodecException;
+import edu.sc.seis.seisFile.fdsnws.quakeml.Pick;
 import edu.sc.seis.sod.model.common.MicroSecondDate;
 import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
 import edu.sc.seis.sod.model.common.QuantityImpl;
@@ -181,6 +183,18 @@ public class SimplePlotUtil {
      */
     public static IntRange getDayPixelRange(LocalSeismogramImpl seis,
                                             int pixelsPerDay,
+                                            ZonedDateTime startOfDay) {
+        return getDayPixelRange(seis, pixelsPerDay, new MicroSecondDate(startOfDay));
+    }
+
+
+    /*
+     * Same as above, except day can start at any time. The pixel time
+     * boundaries are still dependent upon midnight of the seismogram start
+     * time.
+     */
+    public static IntRange getDayPixelRange(LocalSeismogramImpl seis,
+                                            int pixelsPerDay,
                                             MicroSecondDate startOfDay) {
         MicroSecondTimeRange seisTR = new MicroSecondTimeRange((LocalSeismogramImpl)seis);
         MicroSecondTimeRange dayTR = new MicroSecondTimeRange(startOfDay,
@@ -225,8 +239,8 @@ public class SimplePlotUtil {
         LocalSeismogramImpl seis = (LocalSeismogramImpl)seismogram;
         int width = size.width;
         int[][] out = new int[2][];
-        if(seis.getEndTime().before(timeRange.getBeginTime())
-                || seis.getBeginTime().after(timeRange.getEndTime())) {
+        if(seis.getEndTime().isBefore(timeRange.getBeginTime().toZonedDateTime())
+                || seis.getBeginTime().isAfter(timeRange.getEndTime().toZonedDateTime())) {
             out[0] = new int[0];
             out[1] = new int[0];
             logger.info("The end time is before the beginTime in simple seismogram");
@@ -243,13 +257,13 @@ public class SimplePlotUtil {
             seisEndIndex = seis.getNumPoints() - 1;
         }
         MicroSecondDate tempdate = getValue(seis.getNumPoints(),
-                                            seis.getBeginTime(),
-                                            seis.getEndTime(),
+                                            new MicroSecondDate(seis.getBeginTime()),
+                                            new MicroSecondDate(seis.getEndTime()),
                                             seisStartIndex);
         int pixelStartIndex = getPixel(width, timeRange, tempdate);
         tempdate = getValue(seis.getNumPoints(),
-                            seis.getBeginTime(),
-                            seis.getEndTime(),
+                            new MicroSecondDate(seis.getBeginTime()),
+                            new MicroSecondDate(seis.getEndTime()),
                             seisEndIndex);
         int pixelEndIndex = getPixel(width, timeRange, tempdate);
         int pixels = seisEndIndex - seisStartIndex + 1;
@@ -332,8 +346,8 @@ public class SimplePlotUtil {
     public static final int getPoint(LocalSeismogramImpl seis,
                                      MicroSecondDate time) {
         return getPixel(seis.getNumPoints(),
-                        seis.getBeginTime(),
-                        seis.getEndTime(),
+                        new MicroSecondDate(seis.getBeginTime()),
+                        new MicroSecondDate(seis.getEndTime()),
                         time);
     }
 
@@ -426,7 +440,7 @@ public class SimplePlotUtil {
                 try {
                     Plottable plott = makePlottable(curSeis, pixelsPerDay);
                     if (plott.x_coor.length > 0) {
-                        MicroSecondDate plotStartTime = getBeginningOfDay(curSeis.getBeginTime());
+                        MicroSecondDate plotStartTime = getBeginningOfDay(new MicroSecondDate(curSeis.getBeginTime()));
                         PlottableChunk chunk = new PlottableChunk(plott,
                                                                   getDayPixelRange(seis[i],
                                                                                                   pixelsPerDay,
@@ -434,10 +448,10 @@ public class SimplePlotUtil {
                                                                           .getMin(),
                                                                   plotStartTime,
                                                                   pixelsPerDay,
-                                                                  curSeis.channel_id.network_id.network_code,
-                                                                  curSeis.channel_id.station_code,
-                                                                  curSeis.channel_id.site_code,
-                                                                  curSeis.channel_id.channel_code);
+                                                                  curSeis.channel_id.getNetworkId(),
+                                                                  curSeis.channel_id.getStationCode(),
+                                                                  curSeis.channel_id.getLocCode(),
+                                                                  curSeis.channel_id.getChannelCode());
                         chunks.add(chunk);
                     }
                 } catch(CodecException e) {

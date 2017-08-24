@@ -3,18 +3,18 @@ package edu.sc.seis.sod.util.convert.stationxml;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.sc.seis.sod.model.station.StationImpl;
+import edu.sc.seis.seisFile.fdsnws.stationxml.Station;
 
 
 
 public class StationChannelBundle {
 
-    public StationChannelBundle(StationImpl station, List<ChannelSensitivityBundle> chanList) {
+    public StationChannelBundle(Station station, List<ChannelSensitivityBundle> chanList) {
         this.station = station;
         this.chanList = chanList;
     }
     
-    public StationChannelBundle(StationImpl station) {
+    public StationChannelBundle(Station station) {
         this( station, new ArrayList<ChannelSensitivityBundle>());
     }
     
@@ -23,7 +23,7 @@ public class StationChannelBundle {
     }
 
 
-    public StationImpl getStation() {
+    public Station getStation() {
         return station;
     }
     
@@ -31,6 +31,6 @@ public class StationChannelBundle {
         return chanList;
     }
 
-    StationImpl station;
+    Station station;
     List<ChannelSensitivityBundle> chanList;
 }

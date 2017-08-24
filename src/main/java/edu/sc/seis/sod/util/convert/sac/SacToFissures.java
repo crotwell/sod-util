@@ -6,7 +6,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DecimalFormat;
+import java.time.Duration;
+import java.time.Month;
+import java.time.ZonedDateTime;
 
+import edu.sc.seis.seisFile.fdsnws.quakeml.Event;
+import edu.sc.seis.seisFile.fdsnws.quakeml.Origin;
+import edu.sc.seis.seisFile.fdsnws.quakeml.RealQuantity;
+import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
+import edu.sc.seis.seisFile.fdsnws.stationxml.Channel;
+import edu.sc.seis.seisFile.fdsnws.stationxml.Network;
+import edu.sc.seis.seisFile.fdsnws.stationxml.Station;
 import edu.sc.seis.seisFile.sac.SacConstants;
 import edu.sc.seis.seisFile.sac.SacHeader;
 import edu.sc.seis.seisFile.sac.SacTimeSeries;
@@ -30,13 +40,9 @@ import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
 import edu.sc.seis.sod.model.seismogram.SeismogramAttrImpl;
 import edu.sc.seis.sod.model.seismogram.TimeSeriesDataSel;
 import edu.sc.seis.sod.model.station.ChannelId;
-import edu.sc.seis.sod.model.station.ChannelImpl;
-import edu.sc.seis.sod.model.station.NetworkAttrImpl;
 import edu.sc.seis.sod.model.station.NetworkId;
 import edu.sc.seis.sod.model.station.SiteId;
-import edu.sc.seis.sod.model.station.SiteImpl;
 import edu.sc.seis.sod.model.station.StationId;
-import edu.sc.seis.sod.model.station.StationImpl;
 import edu.sc.seis.sod.util.time.ClockUtil;
 
 /**
@@ -92,11 +98,10 @@ public class SacToFissures {
             } 
         }
         if( ! SacConstants.isUndef(sac.getHeader().getB())) {
-            MicroSecondDate beginTime = getSeismogramBeginTime(sac);
-            double error = seis.getBeginTime()
-                    .subtract(beginTime)
-                    .divideBy(period)
-                    .getValue();
+        		ZonedDateTime beginTime = getSeismogramBeginTime(sac);
+            double error = Duration.between(seis.getBeginTime(), 
+                                            beginTime).toNanos()
+                    / period.getValue(UnitImpl.NANOSECOND);
             if(Math.abs(error) > 0.01) {
                 seis.begin_time = beginTime;
             } // end of if (error > 0.01)
@@ -113,7 +118,7 @@ public class SacToFissures {
     
     public static SeismogramAttrImpl getSeismogramAttr(SacTimeSeries sac)
     throws FissuresException {
-        MicroSecondDate beginTime = getSeismogramBeginTime(sac);
+        ZonedDateTime beginTime = getSeismogramBeginTime(sac);
         ChannelId chanId = getChannelId(sac);
         String evtName = "   ";
         SacHeader header = sac.getHeader();
@@ -134,9 +139,9 @@ public class SacToFissures {
             evtName += "  az " + df.format(header.getAz()) + " deg.";
         }
         // seis id can be anything, so set to net:sta:site:chan:begin
-        String seisId = chanId.network_id.network_code + ":"
-                + chanId.station_code + ":" + chanId.site_code + ":"
-                + chanId.channel_code + ":" + beginTime.getISOString();
+        String seisId = chanId.getNetworkId() + ":"
+                + chanId.getStationCode() + ":" + chanId.getLocCode() + ":"
+                + chanId.getChannelCode() + ":" + BaseNodeType.toISOString(beginTime);
         return new SeismogramAttrImpl(seisId,
                                        beginTime,
                                        sac.getHeader().getNpts(),
@@ -163,7 +168,7 @@ public class SacToFissures {
     }
 
     public static ChannelId getChannelId(SacHeader header, String siteCode) {
-        MicroSecondDate nzTime = getNZTime(header);
+        ZonedDateTime nzTime = getNZTime(header);
         String netCode = "XX";
         if( ! SacConstants.isUndef(header.getKnetwk())) {
             netCode = header.getKnetwk().trim().toUpperCase();
@@ -181,8 +186,7 @@ public class SacToFissures {
                 chanCode = chanCode.substring(2, 5);
             }
         }
-        NetworkId netId = new NetworkId(netCode, nzTime);
-        ChannelId id = new ChannelId(netId,
+        ChannelId id = new ChannelId(netCode,
                                      staCode,
                                      siteCode,
                                      chanCode,
@@ -190,11 +194,11 @@ public class SacToFissures {
         return id;
     }
 
-    public static ChannelImpl getChannel(SacTimeSeries sac) {
+    public static Channel getChannel(SacTimeSeries sac) {
         return getChannel(sac.getHeader());
     }
     
-    public static ChannelImpl getChannel(SacHeader header) {
+    public static Channel getChannel(SacHeader header) {
         ChannelId chanId = getChannelId(header);
         float stel = header.getStel();
         if(stel == -12345.0f) {
@@ -212,42 +216,35 @@ public class SacToFissures {
         SamplingImpl samp = new SamplingImpl(1,
                                              new TimeInterval(header.getDelta(),
                                                               UnitImpl.SECOND));
-        TimeRange effective = new TimeRange(chanId.network_id.begin_time,
-                                            (MicroSecondDate)null);
-        NetworkAttrImpl netAttr = new NetworkAttrImpl(chanId.network_id,
-                                                  chanId.network_id.network_code,
-                                                  "",
-                                                  "",
-                                                  effective);
-        StationId staId = new StationId(chanId.network_id,
-                                        chanId.station_code,
-                                        chanId.network_id.begin_time);
-        StationImpl station = new StationImpl(staId,
-                                          chanId.station_code,
-                                          loc,
-                                          effective,
-                                          "",
-                                          "",
-                                          "from sac",
-                                          netAttr);
-        SiteId siteId = new SiteId(chanId.network_id,
-                                   chanId.station_code,
-                                   chanId.site_code,
-                                   chanId.network_id.begin_time);
-        SiteImpl site = new SiteImpl(siteId, loc, effective, station, "from sac");
-        return new ChannelImpl(chanId,
-                               chanId.channel_code,
-                               orient,
-                               samp,
-                               effective,
-                               site);
+        ZonedDateTime begin_time = getNZTime(header);
+        TimeRange effective = new TimeRange(begin_time,
+                                            (ZonedDateTime)null);
+        Network netAttr = new Network(chanId.getNetworkId());
+        netAttr.setStartDateTime(begin_time);
+        StationId staId = new StationId(chanId.getNetworkId(),
+                                        chanId.getStationCode(),
+                                        begin_time);
+        Station station = new Station(netAttr, chanId.getStationCode());
+        station.setLatitude(loc.latitude);
+        station.setLongitude(loc.longitude);
+        station.setElevation((float)loc.elevation.getValue(UnitImpl.METER));
+        station.setStartDateTime(begin_time);
+        station.setDescription("from sac");
+        Channel chan =  new Channel(station,
+                                    chanId.getLocCode(),
+                               chanId.getChannelCode());
+        chan.setAzimuth(orient.azimuth);
+        chan.setDip(orient.dip);
+        chan.setSampleRate((float)samp.getFrequency().getValue(UnitImpl.HERTZ));
+        chan.setStartDateTime(begin_time);
+        return chan;
     }
 
     /**
      * calculates the reference (NZ) time from the sac headers NZYEAR, NZJDAY,
      * NZHOUR, NZMIN, NZSEC, NZMSEC. If any of these are UNDEF (-12345), then ClockUtil.wayPast
      */
-    public static MicroSecondDate getNZTime(SacTimeSeries sac) {
+    public static ZonedDateTime getNZTime(SacTimeSeries sac) {
         return getNZTime(sac.getHeader());
     }
 
@@ -256,21 +253,29 @@ public class SacToFissures {
      * calculates the reference (NZ) time from the sac headers NZYEAR, NZJDAY,
      * NZHOUR, NZMIN, NZSEC, NZMSEC. If any of these are UNDEF (-12345), then ClockUtil.wayPast
      */
-    public static MicroSecondDate getNZTime(SacHeader header) {
+    public static ZonedDateTime getNZTime(SacHeader header) {
         if ( SacConstants.isUndef(header.getNzyear()) ||
                 SacConstants.isUndef(header.getNzjday()) ||
                 SacConstants.isUndef(header.getNzhour()) ||
                 SacConstants.isUndef(header.getNzmin()) ||
                 SacConstants.isUndef(header.getNzsec()) ||
                 SacConstants.isUndef(header.getNzmsec())) {
-            return ClockUtil.wayPast();
+            return ISOTime.future;
         }
         ISOTime isoTime = new ISOTime(header.getNzyear(),
                                       header.getNzjday(),
                                       header.getNzhour(),
                                       header.getNzmin(),
                                       header.getNzsec() + header.getNzmsec() / 1000f);
-        MicroSecondDate originTime = isoTime.getDate();
+        ZonedDateTime originTime = ZonedDateTime.of(header.getNzyear(), 
+        		Month.JANUARY.getValue(),
+        		1,
+        		header.getNzhour(),
+        		header.getNzmin(),
+        		header.getNzsec(),
+        		header.getNzmsec() * 1000000,
+        		BaseNodeType.TZ_UTC);
+        originTime = originTime.plusDays(header.getNzjday()-1);
         return originTime;
     }
 
@@ -278,14 +283,13 @@ public class SacToFissures {
      * calculates the event origin time from the sac headers O, NZYEAR, NZJDAY,
      * NZHOUR, NZMIN, NZSEC, NZMSEC.
      */
-    public static MicroSecondDate getEventOriginTime(SacTimeSeries sac) {
+    public static ZonedDateTime getEventOriginTime(SacTimeSeries sac) {
         return getEventOriginTime(sac.getHeader());
     }
 
-    public static MicroSecondDate getEventOriginTime(SacHeader header) {
-        MicroSecondDate originTime = getNZTime(header);
-        TimeInterval sacOMarker = new TimeInterval(header.getO(), UnitImpl.SECOND);
-        originTime = originTime.add(sacOMarker);
+    public static ZonedDateTime getEventOriginTime(SacHeader header) {
+    		ZonedDateTime originTime = getNZTime(header);
+        originTime = originTime.plusNanos(Math.round( 1000000000 * header.getO()));
         return originTime;
     }
 
@@ -293,7 +297,7 @@ public class SacToFissures {
      * calculates the seismogram begin time from the sac headers B, NZYEAR,
      * NZJDAY, NZHOUR, NZMIN, NZSEC, NZMSEC.
      */
-    public static MicroSecondDate getSeismogramBeginTime(SacTimeSeries sac) {
+    public static ZonedDateTime getSeismogramBeginTime(SacTimeSeries sac) {
         return getSeismogramBeginTime(sac.getHeader());
     }
 
@@ -301,21 +305,21 @@ public class SacToFissures {
      * calculates the seismogram begin time from the sac headers B, NZYEAR,
      * NZJDAY, NZHOUR, NZMIN, NZSEC, NZMSEC.
      */
-    public static MicroSecondDate getSeismogramBeginTime(SacHeader header ) {
-        MicroSecondDate bTime = getNZTime(header);
+    public static ZonedDateTime getSeismogramBeginTime(SacHeader header ) {
+    		ZonedDateTime bTime = getNZTime(header);
         TimeInterval sacBMarker = new TimeInterval(header.getB(), UnitImpl.SECOND);
-        bTime = bTime.add(sacBMarker);
+        bTime = bTime.plusNanos(Math.round(ISOTime.NANOS_PER_SECOND * header.getB()));
         return bTime;
     }
 
-    public static CacheEvent getEvent(SacTimeSeries sac) {
+    public static Event getEvent(SacTimeSeries sac) {
         return getEvent(sac.getHeader());
     }
 
-    public static CacheEvent getEvent(SacHeader header) {
+    public static Event getEvent(SacHeader header) {
         if(! SacConstants.isUndef(header.getO()) && ! SacConstants.isUndef(header.getEvla())
                 &&  ! SacConstants.isUndef(header.getEvlo()) &&  ! SacConstants.isUndef(header.getEvdp())) {
-            MicroSecondDate beginTime = getEventOriginTime(header);
+        		ZonedDateTime beginTime = getEventOriginTime(header);
             EventAttrImpl attr = new EventAttrImpl("SAC Event");
             OriginImpl[] origins = new OriginImpl[1];
             Location loc;
@@ -331,16 +335,15 @@ public class SacToFissures {
                                    new QuantityImpl(header.getEvdp(),
                                                     UnitImpl.KILOMETER));
             } // end of else
-            origins[0] = new OriginImpl("genid:"
-                                                + Math.round(Math.random()
-                                                        * Integer.MAX_VALUE),
-                                        "",
-                                        "",
-                                        beginTime,
-                                        loc,
-                                        new Magnitude[0],
-                                        new ParameterRef[0]);
-            return new CacheEvent(attr, origins, origins[0]);
+            
+            Origin origin = new Origin(beginTime, header.getEvla(), header.getEvlo());
+            if(header.getEvdp() > 1000) {
+            		origin.setDepth(new RealQuantity(header.getEvdp()*1000)); // km to meter
+            } else {
+        		    origin.setDepth(new RealQuantity(header.getEvdp()));
+            }
+            Event event = new Event(origin);
+            return event;
         } else {
             return null;
         }

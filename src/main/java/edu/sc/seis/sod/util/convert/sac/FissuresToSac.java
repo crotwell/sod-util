@@ -4,6 +4,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.CodecException;
+import edu.sc.seis.seisFile.fdsnws.stationxml.Channel;
 import edu.sc.seis.seisFile.sac.Complex;
 import edu.sc.seis.seisFile.sac.SacConstants;
 import edu.sc.seis.seisFile.sac.SacHeader;
@@ -19,7 +20,6 @@ import edu.sc.seis.sod.model.common.TimeInterval;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.event.OriginImpl;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
-import edu.sc.seis.sod.model.station.ChannelImpl;
 import edu.sc.seis.sod.model.station.Filter;
 import edu.sc.seis.sod.model.station.FilterType;
 import edu.sc.seis.sod.model.station.Instrumentation;
@@ -88,10 +88,10 @@ public class FissuresToSac {
 
 		setKZTime(header, new MicroSecondDate(seis.begin_time));
 
-		header.setKnetwk(seis.channel_id.network_id.network_code);
-		header.setKstnm( seis.channel_id.station_code);
-		header.setKcmpnm( seis.channel_id.channel_code);
-		header.setKhole( seis.channel_id.site_code);
+		header.setKnetwk(seis.channel_id.getNetworkId());
+		header.setKstnm( seis.channel_id.getStationCode());
+		header.setKcmpnm( seis.channel_id.getChannelCode());
+		header.setKhole( seis.channel_id.getLocCode());
 
         return new SacTimeSeries(header, floatSamps);
 	}
@@ -107,7 +107,7 @@ public class FissuresToSac {
 	 *            a <code>Channel</code> value
 	 * @return a <code>SacTimeSeries</code> value
 	 */
-	public static SacTimeSeries getSAC(LocalSeismogramImpl seis, ChannelImpl channel)
+	public static SacTimeSeries getSAC(LocalSeismogramImpl seis, Channel channel)
 			throws CodecException {
 		SacTimeSeries sac = getSAC(seis);
 		addChannel(sac.getHeader(), channel);
@@ -145,7 +145,7 @@ public class FissuresToSac {
 	 * @return a <code>SacTimeSeries</code> value
 	 */
 	public static SacTimeSeries getSAC(LocalSeismogramImpl seis,
-			ChannelImpl channel, OriginImpl origin) throws CodecException {
+			Channel channel, OriginImpl origin) throws CodecException {
 		SacTimeSeries sac = getSAC(seis);
 		if (channel != null) {
 			addChannel(sac.getHeader(), channel);
@@ -172,18 +172,16 @@ public class FissuresToSac {
 	 * @param channel
 	 *            a <code>Channel</code>
 	 */
-	public static void addChannel(SacHeader header, ChannelImpl channel) {
-	    header.setStla( (float) channel.getSite().getLocation().latitude);
-	    header.setStlo( (float) channel.getSite().getLocation().longitude);
-		QuantityImpl z = (QuantityImpl) channel.getSite().getLocation().elevation;
-		header.setStel( (float) z.convertTo(UnitImpl.METER).getValue());
-		z = (QuantityImpl) channel.getSite().getLocation().depth;
-		header.setStdp( (float) z.convertTo(UnitImpl.METER).getValue());
+	public static void addChannel(SacHeader header, Channel channel) {
+	    header.setStla( (float) channel.getLatitude().getValue());
+	    header.setStlo( (float) channel.getLongitude().getValue());
+		header.setStel( channel.getElevation().getValue());
+		header.setStdp( channel.getDepth().getValue());
 
-		header.setCmpaz( channel.getOrientation().azimuth);
+		header.setCmpaz( channel.getAzimuth().getValue());
 		// sac vert. is 0, fissures and seed vert. is -90
 		// sac hor. is 90, fissures and seed hor. is 0
-		header.setCmpinc( 90 + channel.getOrientation().dip);
+		header.setCmpinc( 90 + channel.getDip().getValue());
 	}
 
 	/**
