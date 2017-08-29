@@ -1,6 +1,6 @@
 package edu.sc.seis.sod.util.time;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
@@ -36,8 +36,8 @@ public class RangeTool {
         try {
             oneS += BaseNodeType.toISOString(one.begin_time);
             twoS += BaseNodeType.toISOString(two.begin_time);
-            ZonedDateTime oneB = one.getBeginTime();
-            ZonedDateTime twoB = two.getBeginTime();
+            Instant oneB = one.getBeginTime();
+            Instant twoB = two.getBeginTime();
             
         } catch(UnsupportedFormat ee) {
             throw new RuntimeException(oneS+" "+twoS, ee);
@@ -115,8 +115,8 @@ public class RangeTool {
         if(seis.length == 0) {
             return ZERO_TIME;
         }
-        ZonedDateTime beginTime = SortTool.byBeginTimeAscending(seis)[0].getBeginTime();
-        ZonedDateTime endTime = ISOTime.wayPast;
+        Instant beginTime = SortTool.byBeginTimeAscending(seis)[0].getBeginTime();
+        Instant endTime = ISOTime.wayPast;
         for(int i = 0; i < seis.length; i++) {
             if(seis[i].getEndTime().isAfter(endTime)) {
                 endTime = seis[i].getEndTime();

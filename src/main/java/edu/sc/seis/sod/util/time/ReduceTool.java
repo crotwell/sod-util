@@ -1,6 +1,6 @@
 package edu.sc.seis.sod.util.time;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,8 +41,8 @@ public class ReduceTool {
         SortTool.byLengthAscending(seis);
         List results = new ArrayList();
         for(int i = 0; i < seis.length; i++) {
-            ZonedDateTime iEnd = seis[i].getEndTime();
-            ZonedDateTime iBegin = seis[i].getBeginTime();
+            Instant iEnd = seis[i].getEndTime();
+            Instant iBegin = seis[i].getBeginTime();
             boolean contained = false;
             for(int j = i + 1; j < seis.length && !contained; j++) {
                 if(equalsOrAfter(iBegin, seis[j].getBeginTime())
@@ -419,13 +419,13 @@ public class ReduceTool {
         return first.equals(second) || first.before(second);
     }
 
-    public static boolean equalsOrAfter(ZonedDateTime first,
-                                        ZonedDateTime second) {
+    public static boolean equalsOrAfter(Instant first,
+                                        Instant second) {
         return first.equals(second) || first.isAfter(second);
     }
 
-    public static boolean equalsOrBefore(ZonedDateTime first,
-                                         ZonedDateTime second) {
+    public static boolean equalsOrBefore(Instant first,
+                                         Instant second) {
         return first.equals(second) || first.isBefore(second);
     }
 }

@@ -13,6 +13,7 @@ import java.io.ObjectOutputStream;
 import java.time.Duration;
 import java.time.Month;
 import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -47,12 +48,10 @@ import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
 import edu.sc.seis.sod.model.seismogram.Plottable;
 import edu.sc.seis.sod.model.seismogram.PlottableChunk;
 import edu.sc.seis.sod.model.seismogram.Property;
-import edu.sc.seis.sod.model.seismogram.SeismogramAttrImpl;
 import edu.sc.seis.sod.model.seismogram.TimeSeriesDataSel;
 import edu.sc.seis.sod.model.seismogram.TimeSeriesType;
 import edu.sc.seis.sod.model.station.ChannelId;
 import edu.sc.seis.sod.model.station.ChannelIdUtil;
-import edu.sc.seis.sod.model.station.NetworkId;
 import edu.sc.seis.sod.model.station.NetworkIdUtil;
 import edu.sc.seis.sod.util.display.IntRange;
 import edu.sc.seis.sod.util.display.SimplePlotUtil;
@@ -439,7 +438,7 @@ public class FissuresConvert {
                 throw new RuntimeException("encoded data is null " + j);
             }
             seis.append_encoded(edata[j]);
-            ZonedDateTime drEnd = getZonedDateTime(seed.getLastSampleBtime());
+            Instant drEnd = getZonedDateTime(seed.getLastSampleBtime());
             seis.sampling_info = new SamplingImpl(seis.getNumPoints()-1, Duration.between(seis.getBeginTime(), drEnd));
         }
         return seis;
@@ -450,7 +449,7 @@ public class FissuresConvert {
         String isoTime = getISOTime(header.getStartBtime());
         // the network id isn't correct, but network start is not stored
         // in miniseed
-        ZonedDateTime time = BaseNodeType.parseISOString(isoTime);
+        Instant time = BaseNodeType.parseISOString(isoTime);
         String netId = header.getNetworkCode();
         if (NetworkIdUtil.isTemporary(netId)) {
             netId = NetworkIdUtil.formId(netId, time);
@@ -487,7 +486,7 @@ public class FissuresConvert {
                                            chunk.getStationCode(),
                                            chunk.getSiteCode(),
                                            chunk.getChannelCode(),
-                                           chunk.getBeginTime().toZonedDateTime());
+                                           chunk.getBeginTime().toInstant());
             SamplingImpl samp = new SamplingImpl(chunk.getPixelsPerDay()*2, DAY);
             List<DataRecord> drList = toMSeed(toEncodedData(chunk.getYData()),
                                                             chan,
@@ -630,7 +629,7 @@ public class FissuresConvert {
     }
     
     
-    public static ZonedDateTime getZonedDateTime(Btime startStruct) {
+    public static Instant getZonedDateTime(Btime startStruct) {
         ZonedDateTime out = ZonedDateTime.of(startStruct.year,
                                              Month.JANUARY.getValue(),
                                              1,
@@ -641,7 +640,7 @@ public class FissuresConvert {
                                              BaseNodeType.TZ_UTC);
         out = out.plusDays(startStruct.jday-1);
         throw new ToDoException("leap seconds");
-        //return out;
+        //return out.toInstant();
     }
 
     /**

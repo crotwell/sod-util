@@ -2,16 +2,14 @@ package edu.sc.seis.sod.util.display;
 
 import java.awt.Dimension;
 import java.io.IOException;
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.CodecException;
-import edu.sc.seis.seisFile.fdsnws.quakeml.Pick;
 import edu.sc.seis.sod.model.common.MicroSecondDate;
 import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
 import edu.sc.seis.sod.model.common.QuantityImpl;
@@ -183,7 +181,7 @@ public class SimplePlotUtil {
      */
     public static IntRange getDayPixelRange(LocalSeismogramImpl seis,
                                             int pixelsPerDay,
-                                            ZonedDateTime startOfDay) {
+                                            Instant startOfDay) {
         return getDayPixelRange(seis, pixelsPerDay, new MicroSecondDate(startOfDay));
     }
 
@@ -239,8 +237,8 @@ public class SimplePlotUtil {
         LocalSeismogramImpl seis = (LocalSeismogramImpl)seismogram;
         int width = size.width;
         int[][] out = new int[2][];
-        if(seis.getEndTime().isBefore(timeRange.getBeginTime().toZonedDateTime())
-                || seis.getBeginTime().isAfter(timeRange.getEndTime().toZonedDateTime())) {
+        if(seis.getEndTime().isBefore(timeRange.getBeginTime().toInstant())
+                || seis.getBeginTime().isAfter(timeRange.getEndTime().toInstant())) {
             out[0] = new int[0];
             out[1] = new int[0];
             logger.info("The end time is before the beginTime in simple seismogram");
