@@ -1,5 +1,7 @@
 package edu.sc.seis.sod.util.thread;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,7 +17,6 @@ import com.isti.util.updatechecker.UpdateInformation;
 import com.isti.util.updatechecker.XMLUpdateCheckerClient;
 import com.isti.util.updatechecker.XMLUpdateCheckerServer;
 
-import edu.sc.seis.sod.model.common.MicroSecondDate;
 import edu.sc.seis.sod.model.common.TimeInterval;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.util.exceptionHandler.GlobalExceptionHandler;
@@ -60,9 +61,9 @@ public class UpdateCheckerJob implements Runnable {
         //Turn off pref logging so it doesn't complain on Linux if the pref node isn't there.
         Logger prefsLogger = Logger.getLogger("java.util.prefs");
         prefsLogger.setLevel(Level.OFF);
-        MicroSecondDate now = ClockUtil.now();
-        MicroSecondDate date = getNextCheck();
-        if(date.after(now) && !forceCheck) {
+        Instant now = ClockUtil.now();
+        Instant date = getNextCheck();
+        if(date.isAfter(now) && !forceCheck) {
             // don't check
             logger.debug("no updated wanted until " + date);
             return;
@@ -120,7 +121,7 @@ public class UpdateCheckerJob implements Runnable {
                                              options[0]); // default button
                                                             // title
         logger.debug("return val is " + n);
-        TimeInterval nextInterval = SIX_HOUR;
+        Duration nextInterval = SIX_HOUR;
         if(n == JOptionPane.YES_OPTION) {
             logger.debug("Opening browser");
             locationUpdate.run();
@@ -129,7 +130,7 @@ public class UpdateCheckerJob implements Runnable {
         } else if(n == 2) {
             nextInterval = MONTH;
         }
-        MicroSecondDate nextCheck = ClockUtil.now().add(nextInterval);
+        Instant nextCheck = ClockUtil.now().plus(nextInterval);
         setNextCheck(nextCheck);
         logger.debug("no update check wanted for " + nextInterval
                 + ", next at " + nextCheck);
@@ -145,22 +146,22 @@ public class UpdateCheckerJob implements Runnable {
                 + " to get the latest version.");
         System.err.println();
         System.err.println("*******************************************************");
-        setNextCheck(ClockUtil.now().add(SIX_HOUR));
+        setNextCheck(ClockUtil.now().plus(SIX_HOUR));
     }
     
-    protected MicroSecondDate getNextCheck() {
+    protected Instant getNextCheck() {
         if ( usePrefs) {
-            MicroSecondDate now = ClockUtil.now();
-            String nextCheckDate = getPrefs().get(prefsName, now.subtract(SIX_HOUR).getISOString());
-            return new MicroSecondDate(nextCheckDate);
+            Instant now = ClockUtil.now();
+            String nextCheckDate = getPrefs().get(prefsName, now.minus(SIX_HOUR).toString());
+            return ClockUtil.parseISOString(nextCheckDate);
         } else {
-            return ClockUtil.now().subtract(SIX_HOUR);
+            return ClockUtil.now().minus(SIX_HOUR);
         }
     }
     
-    protected void setNextCheck(MicroSecondDate date) throws BackingStoreException {
+    protected void setNextCheck(Instant date) throws BackingStoreException {
         if (usePrefs) {
-            getPrefs().put(prefsName, date.getISOString());
+            getPrefs().put(prefsName, date.toString());
             getPrefs().flush();
         }
     }
@@ -172,11 +173,11 @@ public class UpdateCheckerJob implements Runnable {
         return prefs;
     }
 
-    protected final TimeInterval SIX_HOUR = new TimeInterval(6, UnitImpl.HOUR);
+    protected final Duration SIX_HOUR = Duration.ofHours(6);
 
-    protected final TimeInterval FORTNIGHT = new TimeInterval(14, UnitImpl.DAY);
+    protected final Duration FORTNIGHT = Duration.ofDays(14);
 
-    protected final TimeInterval MONTH = new TimeInterval(30, UnitImpl.DAY);
+    protected final Duration MONTH = Duration.ofDays(30);
 
     protected String prefsName;
 

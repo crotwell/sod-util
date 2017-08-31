@@ -72,7 +72,7 @@ public class HTMLReporter implements ExceptionReporter {
             throws IOException {
         File index = new File(directory, "index.html");
         BufferedWriter out = new BufferedWriter(new FileWriter(index, true));
-        writeln(out, new MicroSecondDate() + " <a href=" + '"'
+        writeln(out, ClockUtil.now() + " <a href=" + '"'
                 + errorFile.getName() + '"' + ">" + t.getClass().getName()
                 + "</a><br/>");
         out.close();

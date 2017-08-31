@@ -1,14 +1,12 @@
 package edu.sc.seis.sod.util.time;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import edu.sc.seis.sod.model.common.MicroSecondDate;
-import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
-import edu.sc.seis.sod.model.common.TimeInterval;
-import edu.sc.seis.sod.model.common.UnitImpl;
+import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
 import edu.sc.seis.sod.model.seismogram.PlottableChunk;
 import edu.sc.seis.sod.model.seismogram.RequestFilter;
@@ -46,79 +44,57 @@ public class SortTool {
         return rf;
     }
 
-    public static MicroSecondTimeRange[] byBeginTimeAscending(MicroSecondTimeRange[] ranges) {
+    public static TimeRange[] byBeginTimeAscending(TimeRange[] ranges) {
         Arrays.sort(ranges, new MSTRBeginSorter());
         return ranges;
     }
 
-    private static class AscendingSizeSorter implements Comparator {
+    public static class SeisSizeSorter implements Comparator<LocalSeismogramImpl>  {
 
-        public int compare(Object o1, Object o2) {
-            TimeInterval int1 = getInterval(o1);
-            TimeInterval int2 = getInterval(o2);
-            if(int1.lessThan(int2)) {
-                return -1;
-            } else if(int1.greaterThan(int2)) {
-                return 1;
-            }
-            return 0;
-        }
-
-        public TimeInterval getInterval(Object o) {
-            return (TimeInterval)o;
+        @Override
+        public int compare(LocalSeismogramImpl o1, LocalSeismogramImpl o2) {
+            return o1.getTimeInterval().compareTo(o2.getTimeInterval());
         }
     }
 
-    public static class SeisSizeSorter extends AscendingSizeSorter {
+    public static class AscendingTimeSorter implements Comparator<Instant> {
 
-        public TimeInterval getInterval(Object o) {
-            return new TimeInterval(((LocalSeismogramImpl)o).getTimeInterval().toNanos(), UnitImpl.NANOSECOND);
+        @Override
+        public int compare(Instant o1, Instant o2) {
+            return o1.compareTo(o2);
         }
     }
 
-    public static class AscendingTimeSorter implements Comparator {
+    private static class SeisBeginSorter  implements Comparator<LocalSeismogramImpl> {
 
-        public int compare(Object o1, Object o2) {
-            MicroSecondDate o1Begin = getTime(o1);
-            MicroSecondDate o2Begin = getTime(o2);
-            if(o1Begin.before(o2Begin)) {
-                return -1;
-            } else if(o1Begin.after(o2Begin)) {
-                return 1;
-            }
-            return 0;
-        }
-
-        public MicroSecondDate getTime(Object o) {
-            return (MicroSecondDate)o;
+        @Override
+        public int compare(LocalSeismogramImpl o1, LocalSeismogramImpl o2) {
+            return o1.getBeginTime().compareTo(o2.getBeginTime());
         }
     }
 
-    private static class SeisBeginSorter extends AscendingTimeSorter {
+    private static class PCBeginSorter implements Comparator<PlottableChunk> {
 
-        public MicroSecondDate getTime(Object o) {
-            return new MicroSecondDate(((LocalSeismogramImpl)o).getBeginTime());
+
+        @Override
+        public int compare(PlottableChunk o1, PlottableChunk o2) {
+            return o1.getBeginTime().compareTo(o2.getBeginTime());
         }
     }
 
-    private static class PCBeginSorter extends AscendingTimeSorter {
+    private static class RFBeginSorter  implements Comparator<RequestFilter> {
 
-        public MicroSecondDate getTime(Object o) {
-            return ((PlottableChunk)o).getBeginTime();
+        @Override
+        public int compare(RequestFilter o1, RequestFilter o2) {
+            return o1.start_time.compareTo(o2.start_time);
         }
     }
 
-    private static class RFBeginSorter extends AscendingTimeSorter {
+    private static class MSTRBeginSorter implements Comparator<TimeRange> {
 
-        public MicroSecondDate getTime(Object o) {
-            return new MicroSecondDate(((RequestFilter)o).start_time);
-        }
-    }
-
-    private static class MSTRBeginSorter extends AscendingTimeSorter {
-
-        public MicroSecondDate getTime(Object o) {
-            return ((MicroSecondTimeRange)o).getBeginTime();
+        @Override
+        public int compare(TimeRange o1, TimeRange o2) {
+            return o1.getBeginTime().compareTo(o2.getBeginTime());
         }
     }
 }

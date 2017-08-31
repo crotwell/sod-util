@@ -1,15 +1,12 @@
 package edu.sc.seis.sod.util.time;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
 import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
 import edu.sc.seis.sod.model.common.ISOTime;
-import edu.sc.seis.sod.model.common.MicroSecondDate;
-import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
-import edu.sc.seis.sod.model.common.TimeInterval;
 import edu.sc.seis.sod.model.common.TimeRange;
-import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.common.UnsupportedFormat;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
 import edu.sc.seis.sod.model.seismogram.PlottableChunk;
@@ -21,7 +18,7 @@ import edu.sc.seis.sod.model.seismogram.RequestFilter;
 public class RangeTool {
 
     public static boolean areContiguous(PlottableChunk one, PlottableChunk two) {
-        TimeInterval sampleInterval = new TimeInterval(0, UnitImpl.DAY);
+        Duration sampleInterval = Duration.ofNanos(0);
         return areContiguous(one.getTimeRange(),
                              two.getTimeRange(),
                              sampleInterval);
@@ -49,38 +46,38 @@ public class RangeTool {
             first = two;
             second = one;
         }
-        MicroSecondTimeRange firstRange = new MicroSecondTimeRange(first);
+        TimeRange firstRange = new TimeRange(first);
         // make one end time 1/2 sample later, so areContiguous will check that first
         // sample of second is within 1/2 sample period of time of next data point
-        return areContiguous(new MicroSecondTimeRange(firstRange.getBeginTime(), 
-                                                      firstRange.getEndTime().add((TimeInterval)one.getSampling().getPeriod().multiplyBy(0.5))),
-                             new MicroSecondTimeRange(second),
-                             (TimeInterval)first.getSampling().getPeriod());
+        return areContiguous(new TimeRange(firstRange.getBeginTime(), 
+                                                      firstRange.getEndTime().plus(one.getSampling().getPeriod().dividedBy(2))),
+                             new TimeRange(second),
+                             first.getSampling().getPeriod());
     }
 
     public static boolean areContiguous(RequestFilter one, RequestFilter two) {
-        return areContiguous(new MicroSecondTimeRange(one),
-                             new MicroSecondTimeRange(two));
+        return areContiguous(new TimeRange(one),
+                             new TimeRange(two));
     }
 
-    public static boolean areContiguous(MicroSecondTimeRange one,
-                                        MicroSecondTimeRange two,
-                                        TimeInterval interval) {
+    public static boolean areContiguous(TimeRange one,
+                                        TimeRange two,
+                                        Duration interval) {
         if(!RangeTool.areOverlapping(one, two)) {
-            TimeInterval littleMoreThanInterval = (TimeInterval)interval.add(new TimeInterval(1, UnitImpl.MICROSECOND));
-            if(one.getEndTime().before(two.getBeginTime())) {
+            Duration littleMoreThanInterval = interval.plus(Duration.ofNanos(1000));
+            if(one.getEndTime().isBefore(two.getBeginTime())) {
                 return one.getEndTime()
-                        .add(littleMoreThanInterval)
-                        .after(two.getBeginTime());
+                        .plus(littleMoreThanInterval)
+                        .isAfter(two.getBeginTime());
             }
-            return two.getEndTime().before(one.getBeginTime()) &&
-            two.getEndTime().add(littleMoreThanInterval).after(one.getBeginTime());
+            return two.getEndTime().isBefore(one.getBeginTime()) &&
+            two.getEndTime().plus(littleMoreThanInterval).isAfter(one.getBeginTime());
         }
         return false;
     }
 
-    public static boolean areContiguous(MicroSecondTimeRange one,
-                                        MicroSecondTimeRange two) {
+    public static boolean areContiguous(TimeRange one,
+                                        TimeRange two) {
         return one.getEndTime().equals(two.getBeginTime())
                 || one.getBeginTime().equals(two.getEndTime());
     }
@@ -89,10 +86,10 @@ public class RangeTool {
         return areOverlapping(one.getTimeRange(), two.getTimeRange());
     }
 
-    public static boolean areOverlapping(MicroSecondTimeRange one,
-                                         MicroSecondTimeRange two) {
-        if(one.getBeginTime().before(two.getEndTime())
-                && one.getEndTime().after(two.getBeginTime())) {
+    public static boolean areOverlapping(TimeRange one,
+                                         TimeRange two) {
+        if(one.getBeginTime().isBefore(two.getEndTime())
+                && one.getEndTime().isAfter(two.getBeginTime())) {
             return true;
         }
         return false;
@@ -111,7 +108,7 @@ public class RangeTool {
      * @returns A time range encompassing the earliest begin time of the passed
      *          in seismograms to the latest end time
      */
-    public static MicroSecondTimeRange getFullTime(LocalSeismogramImpl[] seis) {
+    public static TimeRange getFullTime(LocalSeismogramImpl[] seis) {
         if(seis.length == 0) {
             return ZERO_TIME;
         }
@@ -130,38 +127,38 @@ public class RangeTool {
      * @returns A time range encompassing the earliest begin time of the passed
      *          in request filter to the latest end time
      */
-    public static MicroSecondTimeRange getFullTime(RequestFilter[] seis) {
+    public static TimeRange getFullTime(RequestFilter[] seis) {
         if(seis.length == 0) {
             return ZERO_TIME;
         }
-        MicroSecondDate beginTime = new MicroSecondDate(SortTool.byBeginTimeAscending(seis)[0].start_time);
-        MicroSecondDate endTime = new MicroSecondDate(0);
+        Instant beginTime = SortTool.byBeginTimeAscending(seis)[0].start_time;
+        Instant endTime = beginTime;
         for(int i = 0; i < seis.length; i++) {
-            if(new MicroSecondDate(seis[i].end_time).after(endTime)) {
-                endTime = new MicroSecondDate(seis[i].end_time);
+            if(seis[i].end_time.isAfter(endTime)) {
+                endTime = seis[i].end_time;
             }
         }
-        return new MicroSecondTimeRange(beginTime, endTime);
+        return new TimeRange(beginTime, endTime);
     }
     
     
-    public static MicroSecondTimeRange getFullTime(List<PlottableChunk> pc) {
+    public static TimeRange getFullTime(List<PlottableChunk> pc) {
         if(pc.size() == 0) {
             return ZERO_TIME;
         }
-        MicroSecondDate beginTime = SortTool.byBeginTimeAscending(pc).get(0).getBeginTime();
-        MicroSecondDate endTime = new MicroSecondDate(0);
+        Instant beginTime = SortTool.byBeginTimeAscending(pc).get(0).getBeginTime();
+        Instant endTime = beginTime;
         for (PlottableChunk plottableChunk : pc) {
-            if(plottableChunk.getEndTime().after(endTime)) {
+            if(plottableChunk.getEndTime().isAfter(endTime)) {
                 endTime = plottableChunk.getEndTime();
             }
         }
-        return new MicroSecondTimeRange(beginTime, endTime);
+        return new TimeRange(beginTime, endTime);
     }
     
-    public static final MicroSecondTimeRange ZERO_TIME = new MicroSecondTimeRange(new MicroSecondDate(0),
-                                                                                  new MicroSecondDate(0));
+    public static final TimeRange ZERO_TIME = new TimeRange(Instant.ofEpochSecond(0),
+                                                            Instant.ofEpochSecond(0));
 
-    public static final MicroSecondTimeRange ONE_TIME = new MicroSecondTimeRange(new MicroSecondDate(0),
-                                                                                 new MicroSecondDate(1));
+    public static final TimeRange ONE_TIME = new TimeRange(Instant.ofEpochMilli(0),
+                                                           Instant.ofEpochMilli(1));
 }

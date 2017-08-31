@@ -7,10 +7,13 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
+import java.time.Instant;
 
+import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
 import edu.sc.seis.sod.model.common.ISOTime;
-import edu.sc.seis.sod.model.common.MicroSecondDate;
-import edu.sc.seis.sod.model.common.TimeInterval;
+import edu.sc.seis.sod.model.common.QuantityImpl;
+import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.util.exceptionHandler.GlobalExceptionHandler;
 
@@ -25,7 +28,7 @@ public class ClockUtil {
      * Calculates the difference between the CPU clock and the time retrieved
      * from the http://www.seis.sc.edu/cgi-bin/date_time.pl. 
      */
-    public static TimeInterval getTimeOffset() {
+    public static Duration getTimeOffset() {
         if(serverOffset == null ) {
             if (warnServerFail ) {
                 // already tried and failed, so...
@@ -47,8 +50,8 @@ public class ClockUtil {
         // offset is zero, check for really bad clocks first
         logger.debug("Unable to make a connection to "+SEIS_SC_EDU_URL+" to verify system clock, assuming offset is zero.", e);
         logger.warn("Unable to make a connection to "+SEIS_SC_EDU_URL+" to verify system clock, assuming offset is zero.");
-        MicroSecondDate localNow = new MicroSecondDate();
-        if(!warnBadBadClock && OLD_DATE.after(localNow)) {
+        Instant localNow = Instant.now();
+        if(!warnBadBadClock && OLD_DATE.isAfter(localNow)) {
             warnBadBadClock = true;
             GlobalExceptionHandler.handle("Unable to check the time from the server and the computer's clock is obviously wrong. Please reset the clock on your computer to be closer to real time. \nComputer Time="
                                                   + localNow
@@ -63,35 +66,35 @@ public class ClockUtil {
      * ability of the system. If a connection to a remote server cannot be
      * established, then the current CPU time is used.
      */
-    public static MicroSecondDate now() {
-        return new MicroSecondDate().add(getTimeOffset());
+    public static Instant now() {
+        return Instant.now().plus(getTimeOffset());
     }
 
-    public static MicroSecondDate tomorrow() {
-        return now().add(ONE_DAY);
+    public static Instant tomorrow() {
+        return now().plus(ONE_DAY);
     }
     
-    public static MicroSecondDate yesterday() {
-        return now().subtract(ONE_DAY);
+    public static Instant yesterday() {
+        return now().minus(ONE_DAY);
     }
     
-    public static MicroSecondDate lastWeek() {
-        return now().subtract(ONE_WEEK);
+    public static Instant lastWeek() {
+        return now().minus(ONE_WEEK);
     }
     
-    public static MicroSecondDate lastMonth() {
-        return now().subtract(ONE_MONTH);
+    public static Instant lastMonth() {
+        return now().minus(ONE_MONTH);
     }
     
-    public static MicroSecondDate wayPast() {
-        return new MicroSecondDate(0);
+    public static Instant wayPast() {
+        return ISOTime.wayPast;
     }
     
-    public static MicroSecondDate wayFuture() {
-        return new MicroSecondDate(ISOTime.future);
+    public static Instant wayFuture() {
+        return ISOTime.future;
     }
 
-    public static TimeInterval getServerTimeOffset() throws IOException {
+    public static Duration getServerTimeOffset() throws IOException {
         HttpURLConnection conn = (HttpURLConnection)SEIS_SC_EDU_URL.openConnection();
         conn.setReadTimeout(10000); // timeout after 10 seconds
         InputStream is = conn.getInputStream();
@@ -102,19 +105,58 @@ public class ClockUtil {
         while((str = bufferedReader.readLine()) != null) {
             timeStr = str;
         }
-        MicroSecondDate localTime = new MicroSecondDate();
-        MicroSecondDate serverTime = new ISOTime(timeStr).getDate();
-        return new TimeInterval(localTime, serverTime);
+        Instant localTime = Instant.now();
+        Instant serverTime = BaseNodeType.parseISOString(timeStr);
+        return Duration.between(localTime, serverTime);
+    }
+    
+    /** True if the first duration is less than the second. */
+    public static boolean lessThan(Duration first, Duration second) {
+        return first.compareTo(second) < 0;
+    }
+    
+    public static Instant parseISOString(String time) {
+        return BaseNodeType.parseISOString(time);
+    }
+    
+    public static String formatDuration(Instant before, Instant after) {
+        return Duration.between(before,  after).toMillis()/1000f+" sec";
+    }
+
+    
+    public static Duration difference(Instant before, Instant after) {
+        return Duration.between(before,  after).abs();
+    }
+    
+    public static String format(Duration d) {
+        return d.toString();
+    }
+    
+    public static Duration durationFromSeconds(double seconds) {
+        return Duration.ofNanos(Math.round(TimeRange.NANOS_IN_SEC*seconds));
+    }
+    
+    public static Duration durationFrom(double value, UnitImpl unit) {
+        QuantityImpl q = new QuantityImpl(value, unit);
+        return Duration.ofNanos(Math.round(q.getValue(UnitImpl.NANOSECOND)));
+    }
+    
+    public static Duration durationFrom(QuantityImpl q) {
+        return Duration.ofNanos(Math.round(q.getValue(UnitImpl.NANOSECOND)));
+    }
+    
+    public static Instant instantFromEpochSeconds(double epochSec) {
+        long epochEvenSeconds = Math.round(epochSec);
+        return Instant.ofEpochSecond(epochEvenSeconds, Math.round(TimeRange.NANOS_IN_SEC*(epochSec-epochEvenSeconds)));
     }
     
     private static boolean warnServerFail = false;
 
     private static boolean warnBadBadClock = false;
 
-    private static TimeInterval serverOffset = null;
+    private static Duration serverOffset = null;
 
-    private static final TimeInterval ZERO_OFFSET = new TimeInterval(0,
-                                                                     UnitImpl.SECOND);
+    private static final Duration ZERO_OFFSET = Duration.ofNanos(0);
 
     private static URL SEIS_SC_EDU_URL;
     static {
@@ -129,11 +171,20 @@ public class ClockUtil {
     }
 
     /** Used to check for really obviously wrong system clocks, set to a day prior to the release date. */
-    private static MicroSecondDate OLD_DATE = new ISOTime("2009-02-14T00:00:00.000Z").getDate();
+    private static Instant OLD_DATE = BaseNodeType.parseISOString("2017-08-14T00:00:00.000Z");
 
-    private static TimeInterval ONE_DAY = new TimeInterval(1, UnitImpl.DAY);
-    private static TimeInterval ONE_WEEK = new TimeInterval(7, UnitImpl.DAY);
-    private static TimeInterval ONE_MONTH = new TimeInterval(30, UnitImpl.DAY);
+    public static final Duration ONE_SECOND = Duration.ofSeconds(1);
+    public static final Duration ONE_MINUTE = Duration.ofMinutes(1);
+    public static final Duration ONE_HOUR = Duration.ofHours(1);
+    public static final Duration ONE_DAY = Duration.ofDays(1);
+
+    public static final Duration ONE_WEEK = Duration.ofDays(7);
+    public static final Duration ONE_FORTNIGHT = Duration.ofDays(14);
+
+    public static final Duration ONE_MONTH = Duration.ofDays(30);
+    
+    public static final Duration ZERO_DURATION = Duration.ofNanos(0);
     
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ClockUtil.class);
+    
 } // ClockUtil

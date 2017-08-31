@@ -37,6 +37,7 @@ import edu.sc.seis.sod.model.seismogram.SeismogramAttrImpl;
 import edu.sc.seis.sod.model.seismogram.TimeSeriesDataSel;
 import edu.sc.seis.sod.model.station.ChannelId;
 import edu.sc.seis.sod.model.station.StationId;
+import edu.sc.seis.sod.util.time.ClockUtil;
 
 /**
  * SacToFissures.java Created: Thu Mar 2 13:48:26 2000
@@ -80,21 +81,21 @@ public class SacToFissures {
             seis.num_points = sac.getHeader().getNpts();
         }
         SamplingImpl samp = seis.getSampling();
-        TimeInterval period = ((SamplingImpl)samp).getPeriod();
+        Duration period = ((SamplingImpl)samp).getPeriod();
         if(sac.getHeader().getDelta() != 0) {
-            double error = (period.convertTo(UnitImpl.SECOND).getValue() - sac.getHeader().getDelta())
+            double error = (period.toNanos()/TimeRange.NANOS_IN_SEC - sac.getHeader().getDelta())
                     / sac.getHeader().getDelta();
             if(error > 0.01) {
                 seis.sampling_info = new SamplingImpl(1,
-                                                      new TimeInterval(sac.getHeader().getDelta(),
-                                                                       UnitImpl.SECOND));
+                                                      new QuantityImpl(sac.getHeader().getDelta(),
+                                                                       UnitImpl.SECOND).toDuration());
             } 
         }
         if( ! SacConstants.isUndef(sac.getHeader().getB())) {
             Instant beginTime = getSeismogramBeginTime(sac);
             double error = Duration.between(seis.getBeginTime(), 
                                             beginTime).toNanos()
-                    / period.getValue(UnitImpl.NANOSECOND);
+                    / (double)period.toNanos();
             if(Math.abs(error) > 0.01) {
                 seis.begin_time = beginTime;
             } // end of if (error > 0.01)
@@ -139,8 +140,8 @@ public class SacToFissures {
                                        beginTime,
                                        sac.getHeader().getNpts(),
                                        new SamplingImpl(1,
-                                                        new TimeInterval(sac.getHeader().getDelta(),
-                                                                         UnitImpl.SECOND)),
+                                                        new QuantityImpl(sac.getHeader().getDelta(),
+                                                                         UnitImpl.SECOND).toDuration()),
                                        UnitImpl.COUNT,
                                        chanId);
     }
@@ -207,8 +208,8 @@ public class SacToFissures {
                                     new QuantityImpl(header.getStdp(), UnitImpl.METER));
         Orientation orient = new Orientation(header.getCmpaz(), header.getCmpinc() - 90);
         SamplingImpl samp = new SamplingImpl(1,
-                                             new TimeInterval(header.getDelta(),
-                                                              UnitImpl.SECOND));
+                                             new QuantityImpl(header.getDelta(),
+                                                              UnitImpl.SECOND).toDuration());
         Instant begin_time = getNZTime(header);
         TimeRange effective = new TimeRange(begin_time,
                                             (Instant)null);
@@ -282,7 +283,7 @@ public class SacToFissures {
 
     public static Instant getEventOriginTime(SacHeader header) {
         Instant originTime = getNZTime(header);
-        originTime = originTime.plusNanos(Math.round( 1000000000 * header.getO()));
+        originTime = originTime.plusNanos(Math.round( TimeRange.NANOS_IN_SEC * header.getO()));
         return originTime;
     }
 
@@ -300,8 +301,8 @@ public class SacToFissures {
      */
     public static Instant getSeismogramBeginTime(SacHeader header ) {
         Instant bTime = getNZTime(header);
-        TimeInterval sacBMarker = new TimeInterval(header.getB(), UnitImpl.SECOND);
-        bTime = bTime.plusNanos(Math.round(ISOTime.NANOS_PER_SECOND * header.getB()));
+        Duration sacBMarker = ClockUtil.durationFromSeconds(header.getB());
+        bTime = bTime.plus(sacBMarker);
         return bTime;
     }
 

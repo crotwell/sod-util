@@ -12,10 +12,10 @@ import org.slf4j.LoggerFactory;
 import edu.iris.dmc.seedcodec.CodecException;
 import edu.sc.seis.seisFile.mseed.Utility;
 import edu.sc.seis.sod.model.common.FissuresException;
-import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
 import edu.sc.seis.sod.model.common.TimeInterval;
+import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
 
@@ -45,7 +45,7 @@ public class FissuresToWAV {
         blockAlign = numChannels * (bitsPerSample/8);
     }
 
-    public void writeWAV(DataOutput out, MicroSecondTimeRange tr) throws IOException, FissuresException, CodecException  {
+    public void writeWAV(DataOutput out, TimeRange tr) throws IOException, FissuresException, CodecException  {
         updateInfo();
         writeChunkData(out);
         writeWAVData(out);
@@ -134,11 +134,6 @@ public class FissuresToWAV {
             logger.debug("sampleRate = " + sampleRate);
         }
         return sampleRate;
-    }
-
-    public static TimeInterval calculateTime(MicroSecondTimeRange tr, int speedUp){
-        TimeInterval interval = new TimeInterval(tr.getInterval().divideBy((double)speedUp));
-        return interval;
     }
 
     protected static void writeLittleEndian(DataOutput out, int value)

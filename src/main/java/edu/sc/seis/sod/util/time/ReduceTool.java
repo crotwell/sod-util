@@ -6,8 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import edu.sc.seis.sod.model.common.FissuresException;
-import edu.sc.seis.sod.model.common.MicroSecondDate;
-import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
+import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.seismogram.EncodedData;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
@@ -76,25 +75,25 @@ public class ReduceTool {
     public static List<RequestFilter> trimTo(List<RequestFilter> rfList, List<RequestFilter> windowList) {
         List<RequestFilter> out = new ArrayList<RequestFilter>();
         for (RequestFilter window : windowList) {
-            MicroSecondDate windowStart = window.start_time;
-            MicroSecondDate windowEnd = window.end_time;
+            Instant windowStart = window.start_time;
+            Instant windowEnd = window.end_time;
             for (RequestFilter rf : rfList) {
-                MicroSecondDate rfStart = rf.start_time;
-                MicroSecondDate rfEnd = rf.end_time;
-                if ((rfStart.after(windowStart) || rfStart.equals(windowStart))
-                        && (rfEnd.before(windowEnd) || rfEnd.equals(windowEnd))) {
+                Instant rfStart = rf.start_time;
+                Instant rfEnd = rf.end_time;
+                if ((rfStart.isAfter(windowStart) || rfStart.equals(windowStart))
+                        && (rfEnd.isBefore(windowEnd) || rfEnd.equals(windowEnd))) {
                     // good, totally contained
                     out.add(rf);
-                } else if (rfEnd.before(windowStart) || rfEnd.equals(windowStart)) {
+                } else if (rfEnd.isBefore(windowStart) || rfEnd.equals(windowStart)) {
                     // bad, completely before window
-                } else if (rfStart.after(windowEnd) || rfStart.equals(windowEnd)) {
+                } else if (rfStart.isAfter(windowEnd) || rfStart.equals(windowEnd)) {
                     // bad, completely after window
                 } else {
                     // some overlap
-                    if (rfStart.before(windowStart)) {
+                    if (rfStart.isBefore(windowStart)) {
                         rfStart = windowStart;
                     }
-                    if (rfEnd.after(windowEnd)) {
+                    if (rfEnd.isAfter(windowEnd)) {
                         rfEnd = windowEnd;
                     }
                     out.add(new RequestFilter(rf.channel_id, rfStart, rfEnd));
@@ -108,11 +107,11 @@ public class ReduceTool {
      * Unites all ranges in the given array into a single range if they're
      * contiguous or overlapping
      */
-    public static MicroSecondTimeRange[] merge(MicroSecondTimeRange[] ranges) {
+    public static TimeRange[] merge(TimeRange[] ranges) {
         return new MSTRMerger().merge(ranges);
     }
     
-    public static List<MicroSecondTimeRange> mergeMicroSecondTimeRange(List<MicroSecondTimeRange> ranges) {
+    public static List<TimeRange> mergeMicroSecondTimeRange(List<TimeRange> ranges) {
         return new MSTRMerger().merge(ranges);
     }
 
@@ -169,30 +168,30 @@ public class ReduceTool {
     private static class MSTRMerger extends Merger {
 
         public Object merge(Object one, Object two) {
-            return new MicroSecondTimeRange(cast(one), cast(two));
+            return new TimeRange(cast(one), cast(two));
         }
 
         public boolean shouldMerge(Object one, Object two) {
-            MicroSecondTimeRange o = (MicroSecondTimeRange)one;
-            MicroSecondTimeRange t = (MicroSecondTimeRange)two;
-            if(o.getBeginTime().before(t.getBeginTime())) {
-                return !o.getEndTime().before(t.getBeginTime());
+            TimeRange o = (TimeRange)one;
+            TimeRange t = (TimeRange)two;
+            if(o.getBeginTime().isBefore(t.getBeginTime())) {
+                return !o.getEndTime().isBefore(t.getBeginTime());
             }
-            return !t.getEndTime().before(o.getBeginTime());
+            return !t.getEndTime().isBefore(o.getBeginTime());
         }
 
-        public MicroSecondTimeRange cast(Object o) {
-            return (MicroSecondTimeRange)o;
+        public TimeRange cast(Object o) {
+            return (TimeRange)o;
         }
 
-        public MicroSecondTimeRange[] merge(MicroSecondTimeRange[] ranges) {
-            return (MicroSecondTimeRange[])internalMerge(ranges,
-                                                         new MicroSecondTimeRange[0]);
+        public TimeRange[] merge(TimeRange[] ranges) {
+            return (TimeRange[])internalMerge(ranges,
+                                                         new TimeRange[0]);
         }
         
-        public List<MicroSecondTimeRange> merge(List<MicroSecondTimeRange> chunks) {
-            return Arrays.asList((MicroSecondTimeRange[])internalMerge(chunks.toArray(),
-                                                   new MicroSecondTimeRange[0]));
+        public List<TimeRange> merge(List<TimeRange> chunks) {
+            return Arrays.asList((TimeRange[])internalMerge(chunks.toArray(),
+                                                   new TimeRange[0]));
         }
     }
 
@@ -200,7 +199,7 @@ public class ReduceTool {
 
         public Object merge(Object one, Object two) {
             RequestFilter orig = (RequestFilter)one;
-            MicroSecondTimeRange tr = new MicroSecondTimeRange(toMSTR(one),
+            TimeRange tr = new TimeRange(toMSTR(one),
                                                                toMSTR(two));
             return new RequestFilter(orig.channel_id, tr.getBeginTime(), tr.getEndTime());
         }
@@ -215,8 +214,8 @@ public class ReduceTool {
                                                                                                       toMSTR(two)));
         }
 
-        protected MicroSecondTimeRange toMSTR(Object o) {
-            return new MicroSecondTimeRange((RequestFilter)o);
+        protected TimeRange toMSTR(Object o) {
+            return new TimeRange((RequestFilter)o);
         }
 
         public RequestFilter[] merge(RequestFilter[] ranges) {
@@ -232,7 +231,7 @@ public class ReduceTool {
 
         public LocalSeismogramImpl merge(LocalSeismogramImpl seis,
                                          LocalSeismogramImpl seis2) {
-            MicroSecondTimeRange fullRange = new MicroSecondTimeRange(toMSTR(seis),
+            TimeRange fullRange = new TimeRange(toMSTR(seis),
                                                                       toMSTR(seis2));
             if(fullRange.equals(toMSTR(seis))) {
                 return seis;
@@ -333,8 +332,8 @@ public class ReduceTool {
             return ChannelIdUtil.toStringNoDates(((LocalSeismogramImpl)rf).channel_id);
         }
 
-        protected MicroSecondTimeRange toMSTR(Object o) {
-            return new MicroSecondTimeRange((LocalSeismogramImpl)o);
+        protected TimeRange toMSTR(Object o) {
+            return new TimeRange((LocalSeismogramImpl)o);
         }
 
         public LocalSeismogramImpl[] merge(LocalSeismogramImpl[] ranges) {
@@ -348,7 +347,7 @@ public class ReduceTool {
         public Object merge(Object one, Object two) {
             PlottableChunk chunk = cast(one);
             PlottableChunk chunk2 = cast(two);
-            MicroSecondTimeRange fullRange = new MicroSecondTimeRange(chunk.getTimeRange(),
+            TimeRange fullRange = new TimeRange(chunk.getTimeRange(),
                                                                       chunk2.getTimeRange());
             int samples = (int)Math.floor(chunk.getPixelsPerDay() * 2
                     * fullRange.getInterval().convertTo(UnitImpl.DAY).getValue());
@@ -357,7 +356,7 @@ public class ReduceTool {
             fill(fullRange, y, chunk2);
             Plottable mergedData = new Plottable(null, y);
             PlottableChunk earlier = chunk;
-            if(chunk2.getBeginTime().before(chunk.getBeginTime())) {
+            if(chunk2.getBeginTime().isBefore(chunk.getBeginTime())) {
                 earlier = chunk2;
             }
             return new PlottableChunk(mergedData,
@@ -385,10 +384,10 @@ public class ReduceTool {
                                                    new PlottableChunk[0]));
         }
 
-        public static int[] fill(MicroSecondTimeRange fullRange,
+        public static int[] fill(TimeRange fullRange,
                                  int[] y,
                                  PlottableChunk chunk) {
-            MicroSecondDate rowBeginTime = chunk.getBeginTime();
+            Instant rowBeginTime = chunk.getBeginTime();
             int offsetIntoRequestSamples = SimplePlotUtil.getPixel(y.length / 2,
                                                                    fullRange,
                                                                    rowBeginTime) * 2;
@@ -409,16 +408,6 @@ public class ReduceTool {
         }
     }
 
-    public static boolean equalsOrAfter(MicroSecondDate first,
-                                        MicroSecondDate second) {
-        return first.equals(second) || first.after(second);
-    }
-
-    public static boolean equalsOrBefore(MicroSecondDate first,
-                                         MicroSecondDate second) {
-        return first.equals(second) || first.before(second);
-    }
-
     public static boolean equalsOrAfter(Instant first,
                                         Instant second) {
         return first.equals(second) || first.isAfter(second);
@@ -428,4 +417,5 @@ public class ReduceTool {
                                          Instant second) {
         return first.equals(second) || first.isBefore(second);
     }
+
 }

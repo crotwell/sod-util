@@ -39,7 +39,7 @@ public class ExceptionReporterUtils{
         //Date does local time
         sysInfo += "Date : "+new java.util.Date().toString()+"\n";
         //MicroSecondDate does GMT by default
-        sysInfo += "Date(GMT) : "+new MicroSecondDate().toString()+"\n";
+        sysInfo += "Date(GMT) : "+ClockUtil.now().toString()+"\n";
         try {
             sysInfo += "Server offset : "+ClockUtil.getServerTimeOffset()+"\n";
         } catch (IOException e) {

@@ -1,10 +1,10 @@
 package edu.sc.seis.sod.util.time;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import edu.sc.seis.sod.model.common.MicroSecondDate;
-import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
+import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
 import edu.sc.seis.sod.model.seismogram.RequestFilter;
 
@@ -24,9 +24,9 @@ public class CoverageTool {
             return neededFilters;
         }
         LocalSeismogramImpl[] sorted = SortTool.byBeginTimeAscending(existingFilters);
-        MicroSecondTimeRange[] ranges = new MicroSecondTimeRange[sorted.length];
+        TimeRange[] ranges = new TimeRange[sorted.length];
         for(int i = 0; i < sorted.length; i++) {
-            ranges[i] = new MicroSecondTimeRange(sorted[i]);
+            ranges[i] = new TimeRange(sorted[i]);
         }
         return CoverageTool.notCovered(neededFilters, ranges);
     }
@@ -42,26 +42,26 @@ public class CoverageTool {
             return neededFilters;
         }
         RequestFilter[] sorted = SortTool.byBeginTimeAscending(existingFilters);
-        MicroSecondTimeRange[] ranges = new MicroSecondTimeRange[sorted.length];
+        TimeRange[] ranges = new TimeRange[sorted.length];
         for(int i = 0; i < sorted.length; i++) {
-            ranges[i] = new MicroSecondTimeRange(sorted[i]);
+            ranges[i] = new TimeRange(sorted[i]);
         }
         return CoverageTool.notCovered(neededFilters, ranges);
     }
 
     public static RequestFilter[] notCovered(RequestFilter[] filters,
-                                             MicroSecondTimeRange[] timeRanges) {
+                                             TimeRange[] timeRanges) {
         List unsatisfied = new ArrayList();
         timeRanges = ReduceTool.merge(timeRanges);
         timeRanges = SortTool.byBeginTimeAscending(timeRanges);
         for(int i = 0; i < filters.length; i++) {
-            MicroSecondDate rfStart = new MicroSecondDate(filters[i].start_time);
-            MicroSecondDate rfEnd = new MicroSecondDate(filters[i].end_time);
+            Instant rfStart = filters[i].start_time;
+            Instant rfEnd = filters[i].end_time;
             for(int j = 0; j < timeRanges.length; j++) {
-                MicroSecondDate trStart = timeRanges[j].getBeginTime();
-                MicroSecondDate trEnd = timeRanges[j].getEndTime();
-                if(trStart.before(rfEnd)) {
-                    if(trEnd.after(rfStart)) {
+                Instant trStart = timeRanges[j].getBeginTime();
+                Instant trEnd = timeRanges[j].getEndTime();
+                if(trStart.isBefore(rfEnd)) {
+                    if(trEnd.isAfter(rfStart)) {
                         if(ReduceTool.equalsOrBefore(trStart, rfStart)) {
                             rfStart = trEnd;
                         } else {
@@ -76,7 +76,7 @@ public class CoverageTool {
                     }
                 }
             }
-            if(rfEnd.after(rfStart)) {
+            if(rfEnd.isAfter(rfStart)) {
                 unsatisfied.add(new RequestFilter(filters[i].channel_id,
                                                   rfStart,
                                                   rfEnd));
@@ -86,10 +86,10 @@ public class CoverageTool {
     }
 
     public static RequestFilter[] notCoveredIgnoreGaps(RequestFilter[] filters,
-                                                       MicroSecondTimeRange[] timeRanges) {
+                                                       TimeRange[] timeRanges) {
         if(timeRanges.length != 0) {
             timeRanges = SortTool.byBeginTimeAscending(timeRanges);
-            timeRanges = new MicroSecondTimeRange[] {new MicroSecondTimeRange(timeRanges[0],
+            timeRanges = new TimeRange[] {new TimeRange(timeRanges[0],
                                                                               timeRanges[timeRanges.length - 1])};
         }
         return notCovered(filters, timeRanges);

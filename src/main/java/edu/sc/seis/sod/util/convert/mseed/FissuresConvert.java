@@ -11,15 +11,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.Month;
 import java.time.ZonedDateTime;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.B1000Types;
 import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
@@ -34,12 +31,10 @@ import edu.sc.seis.seisFile.mseed.SeedFormatException;
 import edu.sc.seis.seisFile.mseed.SeedRecord;
 import edu.sc.seis.sod.model.common.FissuresException;
 import edu.sc.seis.sod.model.common.ISOTime;
-import edu.sc.seis.sod.model.common.MicroSecondDate;
-import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
 import edu.sc.seis.sod.model.common.ParameterRef;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
-import edu.sc.seis.sod.model.common.TimeInterval;
+import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.ToDoException;
 import edu.sc.seis.sod.model.common.UnitBase;
 import edu.sc.seis.sod.model.common.UnitImpl;
@@ -55,6 +50,7 @@ import edu.sc.seis.sod.model.station.ChannelIdUtil;
 import edu.sc.seis.sod.model.station.NetworkIdUtil;
 import edu.sc.seis.sod.util.display.IntRange;
 import edu.sc.seis.sod.util.display.SimplePlotUtil;
+import edu.sc.seis.sod.util.time.ClockUtil;
 import edu.sc.seis.sod.util.time.RangeTool;
 
 /**
@@ -76,7 +72,7 @@ public class FissuresConvert {
 
     public static DataRecord[] toMSeed(LocalSeismogramImpl seis, int seqStart) throws SeedFormatException {
         LinkedList<DataRecord> outRecords = new LinkedList<DataRecord>();
-        MicroSecondDate start = new MicroSecondDate(seis.begin_time);
+        Instant start = seis.begin_time;
         if (seis.data.discriminator().equals(TimeSeriesType.TYPE_ENCODED)) {
             // encoded data
             EncodedData[] eData = seis.data.encoded_values();
@@ -183,7 +179,7 @@ public class FissuresConvert {
 
     public static LinkedList<DataRecord> toMSeed(EncodedData[] eData,
                                                  ChannelId channel_id,
-                                                 MicroSecondDate start,
+                                                 Instant start,
                                                  SamplingImpl sampling_info,
                                                  int seqStart) throws SeedFormatException {
         return toMSeed(eData, channel_id, start, sampling_info, seqStart, 'M');
@@ -191,7 +187,7 @@ public class FissuresConvert {
 
     public static LinkedList<DataRecord> toMSeed(EncodedData[] eData,
                                                  ChannelId channel_id,
-                                                 MicroSecondDate start,
+                                                 Instant start,
                                                  SamplingImpl sampling_info,
                                                  int seqStart,
                                                  char typeCode) throws SeedFormatException {
@@ -243,8 +239,8 @@ public class FissuresConvert {
             header.setNetworkCode(channel_id.getNetworkId());
             header.setStartBtime(getBtime(start));
             header.setNumSamples((short)eData[i].num_points);
-            TimeInterval sampPeriod = sampling_info.getPeriod();
-            start = start.add((TimeInterval)sampPeriod.multiplyBy(eData[i].num_points));
+            Duration sampPeriod = sampling_info.getPeriod();
+            start = start.plus(sampPeriod.multipliedBy(eData[i].num_points));
             short[] multiAndFactor = calcSeedMultipilerFactor(sampling_info);
             header.setSampleRateFactor(multiAndFactor[0]);
             header.setSampleRateMultiplier(multiAndFactor[1]);
@@ -271,8 +267,7 @@ public class FissuresConvert {
 
     /** calculates the seed representation of a sample rate as factor and multiplier. */
     public static short[] calcSeedMultipilerFactor(SamplingImpl sampling) {
-        TimeInterval sampPeriod = sampling.getPeriod();
-        double sps = 1 / sampPeriod.convertTo(UnitImpl.SECOND).getValue();
+        double sps = sampling.getFrequency().getValue(UnitImpl.HERTZ);
         return DataHeader.calcSeedMultipilerFactor(sps);
     }
 
@@ -486,11 +481,11 @@ public class FissuresConvert {
                                            chunk.getStationCode(),
                                            chunk.getSiteCode(),
                                            chunk.getChannelCode(),
-                                           chunk.getBeginTime().toInstant());
+                                           chunk.getBeginTime());
             SamplingImpl samp = new SamplingImpl(chunk.getPixelsPerDay()*2, DAY);
             List<DataRecord> drList = toMSeed(toEncodedData(chunk.getYData()),
                                                             chan,
-                                                            chunk.getBeginTime().add((TimeInterval)samp.getPeriod().multiplyBy(chunk.getBeginPixel())),
+                                                            chunk.getBeginTime().plus(samp.getPeriod().multipliedBy(chunk.getBeginPixel())),
                                                             samp,
                                                             seqStart);
             logger.debug("Plot toMSeed begin: "+drList.get(0).getHeader().getStartTime());
@@ -527,7 +522,7 @@ public class FissuresConvert {
                                                    seis.getBeginTime());
         PlottableChunk chunk = new PlottableChunk(pData,
                                                   0,  //seisPixelRange.getMin()
-                                                  new MicroSecondDate(seis.getBeginTime()), 
+                                                  seis.getBeginTime(), 
                                                   pixelsPerDay,
                                                   seis.getChannelID().getNetworkId(),
                                                   seis.getChannelID().getStationCode(),
@@ -541,12 +536,12 @@ public class FissuresConvert {
         SamplingImpl sampling;
         Blockette[] blocketts = seed.getBlockettes(100);
         int numPerSampling;
-        TimeInterval timeInterval;
+        Duration timeInterval;
         if (blocketts.length != 0) {
             Blockette100 b100 = (Blockette100)blocketts[0];
             float f = b100.getActualSampleRate();
             numPerSampling = 1;
-            timeInterval = new TimeInterval(1 / f, UnitImpl.SECOND);
+            timeInterval = ClockUtil.durationFromSeconds( f);
             sampling = new SamplingImpl(numPerSampling, timeInterval);
         } else {
             DataHeader header = seed.getHeader();
@@ -557,22 +552,22 @@ public class FissuresConvert {
 
     public static SamplingImpl convertSampleRate(int multi, int factor) {
         int numPerSampling;
-        TimeInterval timeInterval;
+        Duration timeInterval;
         if (factor > 0) {
             numPerSampling = factor;
-            timeInterval = new TimeInterval(1, UnitImpl.SECOND);
+            timeInterval = ClockUtil.ONE_SECOND;
             if (multi > 0) {
                 numPerSampling *= multi;
             } else {
-                timeInterval = (TimeInterval)timeInterval.multiplyBy(-1 * multi);
+                timeInterval = timeInterval.multipliedBy(-1 * multi);
             }
         } else {
             numPerSampling = 1;
-            timeInterval = new TimeInterval(-1 * factor, UnitImpl.SECOND);
+            timeInterval = ClockUtil.ONE_SECOND.multipliedBy(-1 * factor);
             if (multi > 0) {
                 numPerSampling *= multi;
             } else {
-                timeInterval = (TimeInterval)timeInterval.multiplyBy(-1 * multi);
+                timeInterval = timeInterval.multipliedBy(-1 * multi);
             }
         }
         SamplingImpl sampling = new SamplingImpl(numPerSampling, timeInterval);
@@ -643,39 +638,20 @@ public class FissuresConvert {
         //return out.toInstant();
     }
 
-    /**
-     * get the value of start time in MicroSecondDate format
-     * 
-     * @return the value of start time in MicroSecondDate format
-     */
-    public static MicroSecondDate getMicroSecondTime(Btime startStruct) {
-        Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
-        cal.set(startStruct.year,
-                0,
-                startStruct.jday,
-                startStruct.hour,
-                startStruct.min,
-                startStruct.sec);
-        cal.set(cal.MILLISECOND, 0);
-        MicroSecondDate d = new MicroSecondDate(cal.getTime()).add(new TimeInterval(startStruct.tenthMilli*100, UnitImpl.MICROSECOND));
-        return d;
-    }
-
-    public static Btime getBtime(MicroSecondDate date) {
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        cal.setTime(date);
+    public static Btime getBtime(Instant date) {
+        ZonedDateTime zdt = ZonedDateTime.ofInstant(date, BaseNodeType.TZ_UTC);
         Btime btime = new Btime();
-        btime.tenthMilli = cal.get(Calendar.MILLISECOND) * 10 + (int)((Math.round(date.getMicroSeconds() / 100.0)));
-        btime.year = cal.get(Calendar.YEAR);
-        btime.jday = cal.get(Calendar.DAY_OF_YEAR);
-        btime.hour = cal.get(Calendar.HOUR_OF_DAY);
-        btime.min = cal.get(Calendar.MINUTE);
-        btime.sec = cal.get(Calendar.SECOND);
+        btime.tenthMilli = zdt.getNano()/100000;
+        btime.year = zdt.getYear();
+        btime.jday = zdt.getDayOfYear();
+        btime.hour = zdt.getHour();
+        btime.min = zdt.getMinute();
+        btime.sec = zdt.getSecond();
         return btime;
     }
     
-    public static MicroSecondTimeRange getTimeRange(BtimeRange bTime) {
-        return new MicroSecondTimeRange(getMicroSecondTime(bTime.getBegin()), getMicroSecondTime(bTime.getEnd()));
+    public static TimeRange getTimeRange(BtimeRange bTime) {
+        return new TimeRange(getZonedDateTime(bTime.getBegin()), getZonedDateTime(bTime.getEnd()));
     }
 
     public static final byte RECORD_SIZE_4096_POWER = 12;
@@ -694,7 +670,7 @@ public class FissuresConvert {
 
     public static int RECORD_SIZE_256 = (int)Math.pow(2, RECORD_SIZE_256_POWER);
 
-    public static final TimeInterval DAY = new TimeInterval(1, UnitImpl.DAY);
+    public static final Duration DAY =  Duration.ofDays(1);
     
     /**
      * Turns a UnitImpl into a byte array using Java serialization

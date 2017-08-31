@@ -5,18 +5,17 @@ package edu.sc.seis.sod.util.display;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 
-import edu.sc.seis.sod.model.common.MicroSecondDate;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.event.CacheEvent;
 import edu.sc.seis.sod.model.event.Magnitude;
-import edu.sc.seis.sod.model.event.NoPreferredOrigin;
 import edu.sc.seis.sod.model.event.OriginImpl;
 
 /**
@@ -171,7 +170,7 @@ public class EventUtil {
                                        String format,
                                        DateFormat sdf) {
         // Get Date and format it accordingly
-        MicroSecondDate msd = new MicroSecondDate(origin.getOriginTime());
+        Instant msd = origin.getOriginTime();
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         String originTimeString = sdf.format(msd);
         // Get Magnitude

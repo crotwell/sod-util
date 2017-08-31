@@ -2,6 +2,7 @@ package edu.sc.seis.sod.util.display;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -10,17 +11,16 @@ import java.util.List;
 import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.CodecException;
-import edu.sc.seis.sod.model.common.MicroSecondDate;
-import edu.sc.seis.sod.model.common.MicroSecondTimeRange;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
-import edu.sc.seis.sod.model.common.TimeInterval;
+import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.common.UnitRangeImpl;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
 import edu.sc.seis.sod.model.seismogram.Plottable;
 import edu.sc.seis.sod.model.seismogram.PlottableChunk;
 import edu.sc.seis.sod.model.util.LinearInterp;
+import edu.sc.seis.sod.util.time.ClockUtil;
 
 /**
  * SimplePlotUtil.java Created: Thu Jul 8 11:22:02 1999
@@ -42,7 +42,7 @@ public class SimplePlotUtil {
     public static Plottable makePlottable(LocalSeismogramImpl seis,
                                           int pixelsPerDay)
             throws CodecException {
-        MicroSecondTimeRange correctedSeisRange = correctTimeRangeForPixelData(seis,
+        TimeRange correctedSeisRange = correctTimeRangeForPixelData(seis,
                                                                                pixelsPerDay);
         int startPoint = getPoint(seis, correctedSeisRange.getBeginTime());
         int endPoint = getPoint(seis, correctedSeisRange.getEndTime());
@@ -51,10 +51,10 @@ public class SimplePlotUtil {
                                                    seis.getBeginTime());
         int numPixels = seisPixelRange.getDifference();
         // check to see if numPixels doesn't go over
-        MicroSecondDate rangeEnd = correctedSeisRange.getBeginTime()
-                .add(new TimeInterval(getPixelPeriod(pixelsPerDay).multiplyBy(numPixels)));
+        Instant rangeEnd = correctedSeisRange.getBeginTime()
+                .plus(getPixelPeriod(pixelsPerDay).multipliedBy(numPixels));
         boolean corrected = false;
-        if(rangeEnd.after(correctedSeisRange.getEndTime())) {
+        if(rangeEnd.isAfter(correctedSeisRange.getEndTime())) {
             numPixels--;
             corrected = true;
         }
@@ -62,11 +62,11 @@ public class SimplePlotUtil {
         int startPixel = seisPixelRange.getMin();
         int[][] pixels = new int[2][numPixels * 2];
         int pixelPoint = startPixel < 0 ? 0 : startPoint;
-        MicroSecondDate pixelEndTime = correctedSeisRange.getBeginTime();
-        TimeInterval pixelPeriod = getPixelPeriod(pixelsPerDay);
+        Instant pixelEndTime = correctedSeisRange.getBeginTime();
+        Duration pixelPeriod = getPixelPeriod(pixelsPerDay);
         if(corrected) {}
         for(int i = 0; i < numPixels; i++) {
-            pixelEndTime = pixelEndTime.add(pixelPeriod);
+            pixelEndTime = pixelEndTime.plus(pixelPeriod);
             int pos = 2 * i;
             int nextPos = pos + 1;
             pixels[0][pos] = startPixel + i;
@@ -94,15 +94,15 @@ public class SimplePlotUtil {
         return new Plottable(empty, empty);
     }
 
-    public static void debugExtraPixel(MicroSecondTimeRange correctedSeisRange,
-                                       MicroSecondDate rangeEnd,
+    public static void debugExtraPixel(TimeRange correctedSeisRange,
+                                       Instant rangeEnd,
                                        LocalSeismogramImpl seis,
                                        int startPoint,
                                        int endPoint,
                                        int numPixels,
                                        IntRange seisPixelRange,
                                        int startPixel,
-                                       TimeInterval pixelPeriod) {
+                                       Duration pixelPeriod) {
         logger.warn("corrected for freak extra pixel!");
         logger.debug("correctedSeisRange: " + correctedSeisRange);
         logger.debug("end of range would have been " + rangeEnd
@@ -116,48 +116,48 @@ public class SimplePlotUtil {
         logger.debug("pixelPeriod: " + pixelPeriod);
     }
 
-    public static TimeInterval getPixelPeriod(int pixelsPerDay) {
+    public static Duration getPixelPeriod(int pixelsPerDay) {
         double pixelPeriod = 1.0 / (double)pixelsPerDay;
-        return new TimeInterval(pixelPeriod, UnitImpl.DAY);
+        return ClockUtil.durationFrom(pixelPeriod, UnitImpl.DAY);
     }
 
-    public static MicroSecondDate getBeginningOfDay(MicroSecondDate date) {
+    public static Instant getBeginningOfDay(Instant date) {
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         cal.setTime(date);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MILLISECOND, 0);
-        return new MicroSecondDate(cal.getTime());
+        return new Instant(cal.getTime());
     }
 
-    public static MicroSecondTimeRange getDay(MicroSecondDate date) {
-        return new MicroSecondTimeRange(getBeginningOfDay(date), ONE_DAY);
+    public static TimeRange getDay(Instant date) {
+        return new TimeRange(getBeginningOfDay(date), ONE_DAY);
     }
 
-    public static MicroSecondDate getPixelBeginTime(MicroSecondTimeRange day,
+    public static Instant getPixelBeginTime(TimeRange day,
                                                     int pixel,
                                                     int pixelsPerDay) {
-        TimeInterval pixelPeriod = getPixelPeriod(pixelsPerDay);
+        Duration pixelPeriod = getPixelPeriod(pixelsPerDay);
         return day.getBeginTime()
-                .add(new TimeInterval(pixelPeriod.multiplyBy(pixel)));
+                .plus(pixelPeriod.multipliedBy(pixel));
     }
 
     /*
      * gets the time range that makes up one pixel of plottable data that either
      * surrounds the given date or is directly after the given date
      */
-    public static MicroSecondTimeRange getPixelTimeRange(MicroSecondDate point,
+    public static TimeRange getPixelTimeRange(Instant point,
                                                          int pixelsPerDay,
                                                          boolean after) {
-        TimeInterval pixelPeriod = getPixelPeriod(pixelsPerDay);
-        MicroSecondTimeRange day = getDay(point);
+        Duration pixelPeriod = getPixelPeriod(pixelsPerDay);
+        TimeRange day = getDay(point);
         int pixel = getPixel(pixelsPerDay, day, point);
         if(after) {
             pixel++;
         }
-        MicroSecondDate pixelBegin = getPixelBeginTime(day, pixel, pixelsPerDay);
-        return new MicroSecondTimeRange(pixelBegin, pixelPeriod);
+        Instant pixelBegin = getPixelBeginTime(day, pixel, pixelsPerDay);
+        return new TimeRange(pixelBegin, pixelPeriod);
     }
 
     /*
@@ -171,7 +171,7 @@ public class SimplePlotUtil {
                                             int pixelsPerDay) {
         return getDayPixelRange(seis,
                                 pixelsPerDay,
-                                getBeginningOfDay(new MicroSecondDate(seis.begin_time)));
+                                getBeginningOfDay(seis.begin_time));
     }
 
     /*
@@ -182,7 +182,7 @@ public class SimplePlotUtil {
     public static IntRange getDayPixelRange(LocalSeismogramImpl seis,
                                             int pixelsPerDay,
                                             Instant startOfDay) {
-        return getDayPixelRange(seis, pixelsPerDay, new MicroSecondDate(startOfDay));
+        return getDayPixelRange(seis, pixelsPerDay, startOfDay);
     }
 
 
@@ -193,13 +193,13 @@ public class SimplePlotUtil {
      */
     public static IntRange getDayPixelRange(LocalSeismogramImpl seis,
                                             int pixelsPerDay,
-                                            MicroSecondDate startOfDay) {
-        MicroSecondTimeRange seisTR = new MicroSecondTimeRange((LocalSeismogramImpl)seis);
-        MicroSecondTimeRange dayTR = new MicroSecondTimeRange(startOfDay,
+                                            Instant startOfDay) {
+        TimeRange seisTR = new TimeRange((LocalSeismogramImpl)seis);
+        TimeRange dayTR = new TimeRange(startOfDay,
                                                               ONE_DAY);
         int startPixel = getPixel(pixelsPerDay, dayTR, seisTR.getBeginTime());
         if(getPixelTimeRange(seisTR.getBeginTime(), pixelsPerDay, false).getBeginTime()
-                .before(seisTR.getBeginTime())) {
+                .isBefore(seisTR.getBeginTime())) {
             // we don't want pixels with partial data
             startPixel++;
         }
@@ -218,21 +218,21 @@ public class SimplePlotUtil {
         return pixelRange.getMax() > pixelRange.getMin();
     }
 
-    public static MicroSecondTimeRange correctTimeRangeForPixelData(LocalSeismogramImpl seis,
+    public static TimeRange correctTimeRangeForPixelData(LocalSeismogramImpl seis,
                                                                     int pixelsPerDay) {
         IntRange pixelRange = getDayPixelRange(seis, pixelsPerDay);
-        MicroSecondTimeRange day = getDay(new MicroSecondDate(seis.begin_time));
-        MicroSecondDate start = getPixelBeginTime(day,
+        TimeRange day = getDay(seis.begin_time);
+        Instant start = getPixelBeginTime(day,
                                                   pixelRange.getMin(),
                                                   pixelsPerDay);
-        MicroSecondDate end = getPixelBeginTime(day,
+        Instant end = getPixelBeginTime(day,
                                                 pixelRange.getMax(),
                                                 pixelsPerDay);
-        return new MicroSecondTimeRange(start, end);
+        return new TimeRange(start, end);
     }
 
     public static int[][] compressXvalues(LocalSeismogramImpl seismogram,
-                                          MicroSecondTimeRange timeRange,
+                                          TimeRange timeRange,
                                           Dimension size) throws CodecException {
         LocalSeismogramImpl seis = (LocalSeismogramImpl)seismogram;
         int width = size.width;
@@ -244,8 +244,8 @@ public class SimplePlotUtil {
             logger.info("The end time is before the beginTime in simple seismogram");
             return out;
         }
-        MicroSecondDate tMin = timeRange.getBeginTime();
-        MicroSecondDate tMax = timeRange.getEndTime();
+        Instant tMin = timeRange.getBeginTime();
+        Instant tMax = timeRange.getEndTime();
         int seisStartIndex = getPoint(seis, tMin);
         int seisEndIndex = getPoint(seis, tMax);
         if(seisStartIndex < 0) {
@@ -254,14 +254,14 @@ public class SimplePlotUtil {
         if(seisEndIndex >= seis.getNumPoints()) {
             seisEndIndex = seis.getNumPoints() - 1;
         }
-        MicroSecondDate tempdate = getValue(seis.getNumPoints(),
-                                            new MicroSecondDate(seis.getBeginTime()),
-                                            new MicroSecondDate(seis.getEndTime()),
+        Instant tempdate = getValue(seis.getNumPoints(),
+                                            seis.getBeginTime(),
+                                            seis.getEndTime(),
                                             seisStartIndex);
         int pixelStartIndex = getPixel(width, timeRange, tempdate);
         tempdate = getValue(seis.getNumPoints(),
-                            new MicroSecondDate(seis.getBeginTime()),
-                            new MicroSecondDate(seis.getEndTime()),
+                            seis.getBeginTime(),
+                            seis.getEndTime(),
                             seisEndIndex);
         int pixelEndIndex = getPixel(width, timeRange, tempdate);
         int pixels = seisEndIndex - seisStartIndex + 1;
@@ -336,31 +336,31 @@ public class SimplePlotUtil {
     }
 
     public static final int getPixel(int totalPixels,
-                                     MicroSecondTimeRange tr,
-                                     MicroSecondDate value) {
+                                     TimeRange tr,
+                                     Instant value) {
         return getPixel(totalPixels, tr.getBeginTime(), tr.getEndTime(), value);
     }
 
     public static final int getPoint(LocalSeismogramImpl seis,
-                                     MicroSecondDate time) {
+                                     Instant time) {
         return getPixel(seis.getNumPoints(),
-                        new MicroSecondDate(seis.getBeginTime()),
-                        new MicroSecondDate(seis.getEndTime()),
+                        seis.getBeginTime(),
+                        seis.getEndTime(),
                         time);
     }
 
     public static final int getPixel(int totalPixels,
-                                     MicroSecondDate begin,
-                                     MicroSecondDate end,
-                                     MicroSecondDate value) {
+                                     Instant begin,
+                                     Instant end,
+                                     Instant value) {
         return getPixel(0, totalPixels, begin, end, value);
     }
 
     public static final int getPixel(int startPixel,
                                      int endPixel,
-                                     MicroSecondDate begin,
-                                     MicroSecondDate end,
-                                     MicroSecondDate value) {
+                                     Instant begin,
+                                     Instant end,
+                                     Instant value) {
         return (int)linearInterp(begin.getMicroSecondTime(),
                                  startPixel,
                                  end.getMicroSecondTime(),
@@ -368,25 +368,25 @@ public class SimplePlotUtil {
                                  value.getMicroSecondTime());
     }
 
-    public static final MicroSecondDate getValue(int totalPixels,
-                                                 MicroSecondDate begin,
-                                                 MicroSecondDate end,
+    public static final Instant getValue(int totalPixels,
+                                         Instant begin,
+                                         Instant end,
                                                  int pixel) {
         return getValue(0, totalPixels, begin, end, pixel);
     }
 
-    public static final MicroSecondDate getValue(int startPixel,
+    public static final Instant getValue(int startPixel,
                                                  int endPixel,
-                                                 MicroSecondDate begin,
-                                                 MicroSecondDate end,
+                                                 Instant begin,
+                                                 Instant end,
                                                  int pixel) {
         double value = linearInterp(startPixel,
                                     0,
                                     endPixel,
-                                    end.getMicroSecondTime()
-                                            - begin.getMicroSecondTime(),
+                                    Duration.between(begin, end).toNanos(),
                                     pixel);
-        return new MicroSecondDate(begin.getMicroSecondTime() + (long)value);
+        Duration d = Duration.ofNanos(value);
+        return begin.plus(d);
     }
 
     public static final int getPixel(int totalPixels,
@@ -417,15 +417,15 @@ public class SimplePlotUtil {
         return new QuantityImpl(value, range.getUnit());
     }
 
-    public static final MicroSecondDate getTimeForIndex(int index,
-                                                        MicroSecondDate beginTime,
+    public static final Instant getTimeForIndex(int index,
+                                                Instant beginTime,
                                                         SamplingImpl sampling) {
-        TimeInterval width = sampling.getPeriod();
-        width = (TimeInterval)width.multiplyBy(index);
-        return beginTime.add(width);
+        Duration width = sampling.getPeriod();
+        width = width.multipliedBy(index);
+        return beginTime.plus(width);
     }
 
-    public static final TimeInterval ONE_DAY = new TimeInterval(1, UnitImpl.DAY);
+    public static final Duration ONE_DAY = ClockUtil.ONE_DAY;
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SimplePlotUtil.class);
 
@@ -438,7 +438,7 @@ public class SimplePlotUtil {
                 try {
                     Plottable plott = makePlottable(curSeis, pixelsPerDay);
                     if (plott.x_coor.length > 0) {
-                        MicroSecondDate plotStartTime = getBeginningOfDay(new MicroSecondDate(curSeis.getBeginTime()));
+                        Instant plotStartTime = getBeginningOfDay(curSeis.getBeginTime());
                         PlottableChunk chunk = new PlottableChunk(plott,
                                                                   getDayPixelRange(seis[i],
                                                                                                   pixelsPerDay,
@@ -461,18 +461,18 @@ public class SimplePlotUtil {
     }
 
     public static List<PlottableChunk> convertToCommonPixelScale(List<PlottableChunk> chunks,
-                                                             MicroSecondTimeRange requestRange,
+                                                                 TimeRange requestRange,
                                                              int pixelsPerDay) {
         int requestPixels = getPixels(pixelsPerDay, requestRange);
         List<PlottableChunk> outChunks = new ArrayList<PlottableChunk>();
         Iterator<PlottableChunk> it = chunks.iterator();
         while (it.hasNext()) {
             PlottableChunk pc = it.next();
-            if (pc.getEndTime().before(requestRange.getBeginTime())) {
+            if (pc.getEndTime().isBefore(requestRange.getBeginTime())) {
                 // whole chunk before request
                 continue;
             }
-            MicroSecondDate rowBeginTime = pc.getBeginTime();
+            Instant rowBeginTime = pc.getBeginTime();
             int offsetIntoRequestPixels = getPixel(requestPixels, requestRange, rowBeginTime);
             int numPixels = pc.getNumPixels();
             int firstPixelForRequest = 0;
@@ -515,17 +515,17 @@ public class SimplePlotUtil {
         return outChunks;
     }
 
-    public static int getPixels(int pixelsPerDay, MicroSecondTimeRange tr) {
-        TimeInterval inter = tr.getInterval();
-        inter = (TimeInterval)inter.convertTo(UnitImpl.DAY);
+    public static int getPixels(int pixelsPerDay, TimeRange tr) {
+        Duration inter = tr.getInterval();
+        inter = inter.convertTo(UnitImpl.DAY);
         double samples = pixelsPerDay * inter.getValue();
         return (int)Math.floor(samples);
     }
     
     // from PlottableChunk
-    public static int getPixel(MicroSecondDate time, int pixelsPerDay) {
-        MicroSecondDate day = new MicroSecondDate(PlottableChunk.stripToDay(time));
-        MicroSecondTimeRange tr = new MicroSecondTimeRange(day, ONE_DAY);
+    public static int getPixel(Instant time, int pixelsPerDay) {
+        Instant day = PlottableChunk.stripToDay(time);
+        TimeRange tr = new TimeRange(day, ONE_DAY);
         double pixel = SimplePlotUtil.getPixel(pixelsPerDay, tr, time);
         return (int)Math.floor(pixel);
     }

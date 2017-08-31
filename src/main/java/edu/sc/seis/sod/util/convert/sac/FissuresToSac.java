@@ -1,9 +1,13 @@
 package edu.sc.seis.sod.util.convert.sac;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.CodecException;
+import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
 import edu.sc.seis.seisFile.fdsnws.stationxml.Channel;
 import edu.sc.seis.seisFile.sac.Complex;
 import edu.sc.seis.seisFile.sac.SacConstants;
@@ -13,10 +17,8 @@ import edu.sc.seis.seisFile.sac.SacTimeSeries;
 import edu.sc.seis.sod.model.common.DistAz;
 import edu.sc.seis.sod.model.common.FissuresException;
 import edu.sc.seis.sod.model.common.ISOTime;
-import edu.sc.seis.sod.model.common.MicroSecondDate;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
-import edu.sc.seis.sod.model.common.TimeInterval;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.event.OriginImpl;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
@@ -86,7 +88,7 @@ public class FissuresToSac {
 		QuantityImpl mean = (QuantityImpl) seis.getMeanValue();
 		header.setDepmen( (float) mean.convertTo(yUnit).getValue());
 
-		setKZTime(header, new MicroSecondDate(seis.begin_time));
+		setKZTime(header, seis.begin_time);
 
 		header.setKnetwk(seis.channel_id.getNetworkId());
 		header.setKstnm( seis.channel_id.getStationCode());
@@ -200,13 +202,14 @@ public class FissuresToSac {
 		z = (QuantityImpl) origin.getLocation().depth;
 		header.setEvdp( (float) z.convertTo(UnitImpl.METER).getValue());
 
-		ISOTime isoTime = new ISOTime(header.getNzyear(), header.getNzjday(), header.getNzhour(),
-		                              header.getNzmin(), header.getNzsec() + header.getNzmsec() / 1000f);
-		MicroSecondDate beginTime = isoTime.getDate();
-		MicroSecondDate originTime = new MicroSecondDate(origin.getOriginTime());
+		ZonedDateTime isoTime = ZonedDateTime.of(header.getNzyear(), 1, 1, header.getNzhour(),
+		                              header.getNzmin(), header.getNzsec(), header.getNzmsec()*1000000, BaseNodeType.TZ_UTC);
+		isoTime = isoTime.plusDays(header.getNzjday()-1);
+		Instant beginTime = isoTime.toInstant();
+		Instant originTime = origin.getOriginTime();
 		setKZTime(header, originTime);
-		TimeInterval sacBMarker = (TimeInterval) beginTime.subtract(originTime);
-		sacBMarker = (TimeInterval) sacBMarker.convertTo(UnitImpl.SECOND);
+		Duration sacBMarker =  beginTime.subtract(originTime);
+		sacBMarker =  sacBMarker.convertTo(UnitImpl.SECOND);
 		header.setB( (float) sacBMarker.getValue());
 		header.setO( 0);
 		header.setIztype( SacConstants.IO);
@@ -215,7 +218,7 @@ public class FissuresToSac {
 		}
 	}
 
-    public static void setKZTime(SacHeader header, MicroSecondDate date) {
+    public static void setKZTime(SacHeader header, Instant date) {
 		Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 		cal.setTime(date);
 		header.setNzyear( cal.get(Calendar.YEAR));
