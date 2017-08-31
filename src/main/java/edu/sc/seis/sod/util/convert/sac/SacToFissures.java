@@ -27,7 +27,6 @@ import edu.sc.seis.sod.model.common.Location;
 import edu.sc.seis.sod.model.common.Orientation;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
-import edu.sc.seis.sod.model.common.TimeInterval;
 import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.event.EventAttrImpl;

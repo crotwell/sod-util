@@ -9,10 +9,10 @@ import java.text.NumberFormat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.common.UnitRangeImpl;
-import edu.sc.seis.sod.model.station.Response;
 
 public class UnitDisplayUtil {
 

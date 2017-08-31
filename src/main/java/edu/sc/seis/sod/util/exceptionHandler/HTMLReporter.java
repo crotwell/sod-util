@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.sc.seis.sod.model.common.MicroSecondDate;
 import edu.sc.seis.sod.util.time.ClockUtil;
 
 public class HTMLReporter implements ExceptionReporter {

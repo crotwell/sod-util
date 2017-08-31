@@ -17,8 +17,6 @@ import com.isti.util.updatechecker.UpdateInformation;
 import com.isti.util.updatechecker.XMLUpdateCheckerClient;
 import com.isti.util.updatechecker.XMLUpdateCheckerServer;
 
-import edu.sc.seis.sod.model.common.TimeInterval;
-import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.util.exceptionHandler.GlobalExceptionHandler;
 import edu.sc.seis.sod.util.time.ClockUtil;
 
