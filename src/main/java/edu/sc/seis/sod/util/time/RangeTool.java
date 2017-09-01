@@ -4,8 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
-import edu.sc.seis.sod.model.common.ISOTime;
+import edu.sc.seis.seisFile.TimeUtils;
 import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.UnsupportedFormat;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
@@ -31,8 +30,8 @@ public class RangeTool {
         String oneS = "one ";
         String twoS = "two ";
         try {
-            oneS += BaseNodeType.toISOString(one.begin_time);
-            twoS += BaseNodeType.toISOString(two.begin_time);
+            oneS += TimeUtils.toISOString(one.begin_time);
+            twoS += TimeUtils.toISOString(two.begin_time);
             Instant oneB = one.getBeginTime();
             Instant twoB = two.getBeginTime();
             
@@ -113,7 +112,7 @@ public class RangeTool {
             return ZERO_TIME;
         }
         Instant beginTime = SortTool.byBeginTimeAscending(seis)[0].getBeginTime();
-        Instant endTime = ISOTime.wayPast;
+        Instant endTime = TimeUtils.wayPast;
         for(int i = 0; i < seis.length; i++) {
             if(seis[i].getEndTime().isAfter(endTime)) {
                 endTime = seis[i].getEndTime();

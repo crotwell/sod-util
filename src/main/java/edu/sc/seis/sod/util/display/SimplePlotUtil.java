@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.CodecException;
+import edu.sc.seis.seisFile.TimeUtils;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
 import edu.sc.seis.sod.model.common.TimeRange;
@@ -425,7 +426,7 @@ public class SimplePlotUtil {
         return beginTime.plus(width);
     }
 
-    public static final Duration ONE_DAY = ClockUtil.ONE_DAY;
+    public static final Duration ONE_DAY = TimeUtils.ONE_DAY;
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SimplePlotUtil.class);
 

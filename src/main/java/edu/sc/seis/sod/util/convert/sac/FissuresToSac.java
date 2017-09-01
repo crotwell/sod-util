@@ -7,7 +7,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.CodecException;
-import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
+import edu.sc.seis.seisFile.TimeUtils;
 import edu.sc.seis.seisFile.fdsnws.stationxml.Channel;
 import edu.sc.seis.seisFile.sac.Complex;
 import edu.sc.seis.seisFile.sac.SacConstants;
@@ -203,7 +203,7 @@ public class FissuresToSac {
 		header.setEvdp( (float) z.convertTo(UnitImpl.METER).getValue());
 
 		ZonedDateTime isoTime = ZonedDateTime.of(header.getNzyear(), 1, 1, header.getNzhour(),
-		                              header.getNzmin(), header.getNzsec(), header.getNzmsec()*1000000, BaseNodeType.TZ_UTC);
+		                              header.getNzmin(), header.getNzsec(), header.getNzmsec()*1000000, TimeUtils.TZ_UTC);
 		isoTime = isoTime.plusDays(header.getNzjday()-1);
 		Instant beginTime = isoTime.toInstant();
 		Instant originTime = origin.getOriginTime();

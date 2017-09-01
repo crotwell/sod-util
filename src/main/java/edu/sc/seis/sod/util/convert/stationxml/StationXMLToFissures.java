@@ -3,14 +3,13 @@ package edu.sc.seis.sod.util.convert.stationxml;
 import java.time.Duration;
 import java.time.Instant;
 
-import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
+import edu.sc.seis.seisFile.TimeUtils;
 import edu.sc.seis.seisFile.fdsnws.stationxml.FloatType;
 import edu.sc.seis.seisFile.fdsnws.stationxml.StationXMLException;
 import edu.sc.seis.seisFile.fdsnws.stationxml.Unit;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.UnitBase;
 import edu.sc.seis.sod.model.common.UnitImpl;
-import edu.sc.seis.sod.util.time.ClockUtil;
 
 public class StationXMLToFissures {
 
@@ -135,7 +134,7 @@ public class StationXMLToFissures {
     }
 
     public static Instant convertTime(String xml) {
-        return  BaseNodeType.parseISOString(xml);
+        return  TimeUtils.parseISOString(xml);
     }
 
     public static Instant convertTime(String xml, String defaultTime) {
@@ -143,7 +142,7 @@ public class StationXMLToFissures {
         if (xml == null) {
             s = defaultTime;
         }
-        return BaseNodeType.parseISOString(s);
+        return TimeUtils.parseISOString(s);
     }
 
     public static String makeNoNull(String s) {
@@ -155,7 +154,7 @@ public class StationXMLToFissures {
 
     public static final String UNKNOWN = "";
 
-    public static final Duration ONE_SECOND = ClockUtil.ONE_SECOND;
+    public static final Duration ONE_SECOND = TimeUtils.ONE_SECOND;
     
     public static final String WAY_FUTURE = "24990101T00:00:00.000";
     

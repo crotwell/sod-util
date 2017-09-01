@@ -19,7 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import edu.iris.dmc.seedcodec.B1000Types;
-import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
+import edu.sc.seis.seisFile.TimeUtils;
 import edu.sc.seis.seisFile.mseed.Blockette;
 import edu.sc.seis.seisFile.mseed.Blockette100;
 import edu.sc.seis.seisFile.mseed.Blockette1000;
@@ -50,7 +50,6 @@ import edu.sc.seis.sod.model.station.ChannelIdUtil;
 import edu.sc.seis.sod.model.station.NetworkIdUtil;
 import edu.sc.seis.sod.util.display.IntRange;
 import edu.sc.seis.sod.util.display.SimplePlotUtil;
-import edu.sc.seis.sod.util.time.ClockUtil;
 import edu.sc.seis.sod.util.time.RangeTool;
 
 /**
@@ -444,7 +443,7 @@ public class FissuresConvert {
         String isoTime = getISOTime(header.getStartBtime());
         // the network id isn't correct, but network start is not stored
         // in miniseed
-        Instant time = BaseNodeType.parseISOString(isoTime);
+        Instant time = TimeUtils.parseISOString(isoTime);
         String netId = header.getNetworkCode();
         if (NetworkIdUtil.isTemporary(netId)) {
             netId = NetworkIdUtil.formId(netId, time);
@@ -541,7 +540,7 @@ public class FissuresConvert {
             Blockette100 b100 = (Blockette100)blocketts[0];
             float f = b100.getActualSampleRate();
             numPerSampling = 1;
-            timeInterval = ClockUtil.durationFromSeconds( f);
+            timeInterval = TimeUtils.durationFromSeconds( f);
             sampling = new SamplingImpl(numPerSampling, timeInterval);
         } else {
             DataHeader header = seed.getHeader();
@@ -555,7 +554,7 @@ public class FissuresConvert {
         Duration timeInterval;
         if (factor > 0) {
             numPerSampling = factor;
-            timeInterval = ClockUtil.ONE_SECOND;
+            timeInterval = TimeUtils.ONE_SECOND;
             if (multi > 0) {
                 numPerSampling *= multi;
             } else {
@@ -563,7 +562,7 @@ public class FissuresConvert {
             }
         } else {
             numPerSampling = 1;
-            timeInterval = ClockUtil.ONE_SECOND.multipliedBy(-1 * factor);
+            timeInterval = TimeUtils.ONE_SECOND.multipliedBy(-1 * factor);
             if (multi > 0) {
                 numPerSampling *= multi;
             } else {
@@ -632,14 +631,14 @@ public class FissuresConvert {
                                              startStruct.min,
                                              startStruct.sec,
                                              startStruct.tenthMilli*100000,
-                                             BaseNodeType.TZ_UTC);
+                                             TimeUtils.TZ_UTC);
         out = out.plusDays(startStruct.jday-1);
         throw new ToDoException("leap seconds");
         //return out.toInstant();
     }
 
     public static Btime getBtime(Instant date) {
-        ZonedDateTime zdt = ZonedDateTime.ofInstant(date, BaseNodeType.TZ_UTC);
+        ZonedDateTime zdt = ZonedDateTime.ofInstant(date, TimeUtils.TZ_UTC);
         Btime btime = new Btime();
         btime.tenthMilli = zdt.getNano()/100000;
         btime.year = zdt.getYear();

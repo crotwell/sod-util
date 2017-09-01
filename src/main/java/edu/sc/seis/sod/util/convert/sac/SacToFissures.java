@@ -11,10 +11,10 @@ import java.time.Instant;
 import java.time.Month;
 import java.time.ZonedDateTime;
 
+import edu.sc.seis.seisFile.TimeUtils;
 import edu.sc.seis.seisFile.fdsnws.quakeml.Event;
 import edu.sc.seis.seisFile.fdsnws.quakeml.Origin;
 import edu.sc.seis.seisFile.fdsnws.quakeml.RealQuantity;
-import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
 import edu.sc.seis.seisFile.fdsnws.stationxml.Channel;
 import edu.sc.seis.seisFile.fdsnws.stationxml.Network;
 import edu.sc.seis.seisFile.fdsnws.stationxml.Station;
@@ -36,7 +36,6 @@ import edu.sc.seis.sod.model.seismogram.SeismogramAttrImpl;
 import edu.sc.seis.sod.model.seismogram.TimeSeriesDataSel;
 import edu.sc.seis.sod.model.station.ChannelId;
 import edu.sc.seis.sod.model.station.StationId;
-import edu.sc.seis.sod.util.time.ClockUtil;
 
 /**
  * SacToFissures.java Created: Thu Mar 2 13:48:26 2000
@@ -82,7 +81,7 @@ public class SacToFissures {
         SamplingImpl samp = seis.getSampling();
         Duration period = ((SamplingImpl)samp).getPeriod();
         if(sac.getHeader().getDelta() != 0) {
-            double error = (period.toNanos()/TimeRange.NANOS_IN_SEC - sac.getHeader().getDelta())
+            double error = (period.toNanos()/TimeUtils.NANOS_IN_SEC - sac.getHeader().getDelta())
                     / sac.getHeader().getDelta();
             if(error > 0.01) {
                 seis.sampling_info = new SamplingImpl(1,
@@ -134,7 +133,7 @@ public class SacToFissures {
         // seis id can be anything, so set to net:sta:site:chan:begin
         String seisId = chanId.getNetworkId() + ":"
                 + chanId.getStationCode() + ":" + chanId.getLocCode() + ":"
-                + chanId.getChannelCode() + ":" + BaseNodeType.toISOString(beginTime);
+                + chanId.getChannelCode() + ":" + TimeUtils.toISOString(beginTime);
         return new SeismogramAttrImpl(seisId,
                                        beginTime,
                                        sac.getHeader().getNpts(),
@@ -253,7 +252,7 @@ public class SacToFissures {
                 SacConstants.isUndef(header.getNzmin()) ||
                 SacConstants.isUndef(header.getNzsec()) ||
                 SacConstants.isUndef(header.getNzmsec())) {
-            return ISOTime.future;
+            return TimeUtils.future;
         }
         ISOTime isoTime = new ISOTime(header.getNzyear(),
                                       header.getNzjday(),
@@ -267,7 +266,7 @@ public class SacToFissures {
         		header.getNzmin(),
         		header.getNzsec(),
         		header.getNzmsec() * 1000000,
-        		BaseNodeType.TZ_UTC);
+        		TimeUtils.TZ_UTC);
         originTime = originTime.plusDays(header.getNzjday()-1);
         return originTime.toInstant();
     }
@@ -282,7 +281,7 @@ public class SacToFissures {
 
     public static Instant getEventOriginTime(SacHeader header) {
         Instant originTime = getNZTime(header);
-        originTime = originTime.plusNanos(Math.round( TimeRange.NANOS_IN_SEC * header.getO()));
+        originTime = originTime.plusNanos(Math.round( TimeUtils.NANOS_IN_SEC * header.getO()));
         return originTime;
     }
 
@@ -300,7 +299,7 @@ public class SacToFissures {
      */
     public static Instant getSeismogramBeginTime(SacHeader header ) {
         Instant bTime = getNZTime(header);
-        Duration sacBMarker = ClockUtil.durationFromSeconds(header.getB());
+        Duration sacBMarker = TimeUtils.durationFromSeconds(header.getB());
         bTime = bTime.plus(sacBMarker);
         return bTime;
     }

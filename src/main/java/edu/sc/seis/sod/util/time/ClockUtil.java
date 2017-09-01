@@ -10,10 +10,8 @@ import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 
-import edu.sc.seis.seisFile.fdsnws.stationxml.BaseNodeType;
-import edu.sc.seis.sod.model.common.ISOTime;
+import edu.sc.seis.seisFile.TimeUtils;
 import edu.sc.seis.sod.model.common.QuantityImpl;
-import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.util.exceptionHandler.GlobalExceptionHandler;
 
@@ -71,27 +69,29 @@ public class ClockUtil {
     }
 
     public static Instant tomorrow() {
-        return now().plus(ONE_DAY);
+        return now().plus(TimeUtils.ONE_DAY);
     }
     
     public static Instant yesterday() {
-        return now().minus(ONE_DAY);
+        return now().minus(TimeUtils.ONE_DAY);
     }
     
     public static Instant lastWeek() {
-        return now().minus(ONE_WEEK);
+        return now().minus(TimeUtils.ONE_WEEK);
     }
     
     public static Instant lastMonth() {
-        return now().minus(ONE_MONTH);
+        return now().minus(TimeUtils.ONE_MONTH);
     }
     
+    @Deprecated
     public static Instant wayPast() {
-        return ISOTime.wayPast;
+        return TimeUtils.wayPast;
     }
     
+    @Deprecated
     public static Instant wayFuture() {
-        return ISOTime.future;
+        return TimeUtils.future;
     }
 
     public static Duration getServerTimeOffset() throws IOException {
@@ -106,7 +106,7 @@ public class ClockUtil {
             timeStr = str;
         }
         Instant localTime = Instant.now();
-        Instant serverTime = BaseNodeType.parseISOString(timeStr);
+        Instant serverTime = TimeUtils.parseISOString(timeStr);
         return Duration.between(localTime, serverTime);
     }
     
@@ -116,7 +116,7 @@ public class ClockUtil {
     }
     
     public static Instant parseISOString(String time) {
-        return BaseNodeType.parseISOString(time);
+        return TimeUtils.parseISOString(time);
     }
     
     public static String formatDuration(Instant before, Instant after) {
@@ -132,10 +132,6 @@ public class ClockUtil {
         return d.toString();
     }
     
-    public static Duration durationFromSeconds(double seconds) {
-        return Duration.ofNanos(Math.round(TimeRange.NANOS_IN_SEC*seconds));
-    }
-    
     public static Duration durationFrom(double value, UnitImpl unit) {
         QuantityImpl q = new QuantityImpl(value, unit);
         return Duration.ofNanos(Math.round(q.getValue(UnitImpl.NANOSECOND)));
@@ -143,11 +139,6 @@ public class ClockUtil {
     
     public static Duration durationFrom(QuantityImpl q) {
         return Duration.ofNanos(Math.round(q.getValue(UnitImpl.NANOSECOND)));
-    }
-    
-    public static Instant instantFromEpochSeconds(double epochSec) {
-        long epochEvenSeconds = Math.round(epochSec);
-        return Instant.ofEpochSecond(epochEvenSeconds, Math.round(TimeRange.NANOS_IN_SEC*(epochSec-epochEvenSeconds)));
     }
     
     private static boolean warnServerFail = false;
@@ -171,20 +162,8 @@ public class ClockUtil {
     }
 
     /** Used to check for really obviously wrong system clocks, set to a day prior to the release date. */
-    private static Instant OLD_DATE = BaseNodeType.parseISOString("2017-08-14T00:00:00.000Z");
+    private static Instant OLD_DATE = TimeUtils.parseISOString("2017-08-14T00:00:00.000Z");
 
-    public static final Duration ONE_SECOND = Duration.ofSeconds(1);
-    public static final Duration ONE_MINUTE = Duration.ofMinutes(1);
-    public static final Duration ONE_HOUR = Duration.ofHours(1);
-    public static final Duration ONE_DAY = Duration.ofDays(1);
-
-    public static final Duration ONE_WEEK = Duration.ofDays(7);
-    public static final Duration ONE_FORTNIGHT = Duration.ofDays(14);
-
-    public static final Duration ONE_MONTH = Duration.ofDays(30);
-    
-    public static final Duration ZERO_DURATION = Duration.ofNanos(0);
-    
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ClockUtil.class);
     
 } // ClockUtil
