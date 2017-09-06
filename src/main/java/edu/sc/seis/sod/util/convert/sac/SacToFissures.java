@@ -254,11 +254,6 @@ public class SacToFissures {
                 SacConstants.isUndef(header.getNzmsec())) {
             return TimeUtils.future;
         }
-        ISOTime isoTime = new ISOTime(header.getNzyear(),
-                                      header.getNzjday(),
-                                      header.getNzhour(),
-                                      header.getNzmin(),
-                                      header.getNzsec() + header.getNzmsec() / 1000f);
         ZonedDateTime originTime = ZonedDateTime.of(header.getNzyear(), 
         		Month.JANUARY.getValue(),
         		1,

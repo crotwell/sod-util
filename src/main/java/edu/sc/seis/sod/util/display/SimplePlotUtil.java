@@ -4,11 +4,10 @@ import java.awt.Dimension;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
-import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.CodecException;
 import edu.sc.seis.seisFile.TimeUtils;
@@ -123,13 +122,9 @@ public class SimplePlotUtil {
     }
 
     public static Instant getBeginningOfDay(Instant date) {
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-        cal.setTime(date);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        return new Instant(cal.getTime());
+        ZonedDateTime zdt = ZonedDateTime.ofInstant(date, TimeUtils.TZ_UTC);
+        zdt = ZonedDateTime.of(zdt.getYear(), zdt.getMonthValue(), zdt.getDayOfMonth(), 0, 0, 0, 0, TimeUtils.TZ_UTC);
+        return zdt.toInstant();
     }
 
     public static TimeRange getDay(Instant date) {
@@ -173,17 +168,6 @@ public class SimplePlotUtil {
         return getDayPixelRange(seis,
                                 pixelsPerDay,
                                 getBeginningOfDay(seis.begin_time));
-    }
-
-    /*
-     * Same as above, except day can start at any time. The pixel time
-     * boundaries are still dependent upon midnight of the seismogram start
-     * time.
-     */
-    public static IntRange getDayPixelRange(LocalSeismogramImpl seis,
-                                            int pixelsPerDay,
-                                            Instant startOfDay) {
-        return getDayPixelRange(seis, pixelsPerDay, startOfDay);
     }
 
 
@@ -238,8 +222,8 @@ public class SimplePlotUtil {
         LocalSeismogramImpl seis = (LocalSeismogramImpl)seismogram;
         int width = size.width;
         int[][] out = new int[2][];
-        if(seis.getEndTime().isBefore(timeRange.getBeginTime().toInstant())
-                || seis.getBeginTime().isAfter(timeRange.getEndTime().toInstant())) {
+        if(seis.getEndTime().isBefore(timeRange.getBeginTime())
+                || seis.getBeginTime().isAfter(timeRange.getEndTime())) {
             out[0] = new int[0];
             out[1] = new int[0];
             logger.info("The end time is before the beginTime in simple seismogram");
@@ -362,11 +346,11 @@ public class SimplePlotUtil {
                                      Instant begin,
                                      Instant end,
                                      Instant value) {
-        return (int)linearInterp(begin.getMicroSecondTime(),
+        return (int)linearInterp(TimeUtils.instantToEpochSeconds(begin),
                                  startPixel,
-                                 end.getMicroSecondTime(),
+                                 TimeUtils.instantToEpochSeconds(end),
                                  endPixel,
-                                 value.getMicroSecondTime());
+                                 TimeUtils.instantToEpochSeconds(value));
     }
 
     public static final Instant getValue(int totalPixels,
@@ -386,7 +370,7 @@ public class SimplePlotUtil {
                                     endPixel,
                                     Duration.between(begin, end).toNanos(),
                                     pixel);
-        Duration d = Duration.ofNanos(value);
+        Duration d = Duration.ofNanos(Math.round(value));
         return begin.plus(d);
     }
 
@@ -518,8 +502,8 @@ public class SimplePlotUtil {
 
     public static int getPixels(int pixelsPerDay, TimeRange tr) {
         Duration inter = tr.getInterval();
-        inter = inter.convertTo(UnitImpl.DAY);
-        double samples = pixelsPerDay * inter.getValue();
+        double interDays = inter.toNanos()/(86400*TimeUtils.NANOS_IN_SEC);
+        double samples = pixelsPerDay * interDays;
         return (int)Math.floor(samples);
     }
     

@@ -20,6 +20,7 @@ import java.util.List;
 
 import edu.iris.dmc.seedcodec.B1000Types;
 import edu.sc.seis.seisFile.TimeUtils;
+import edu.sc.seis.seisFile.client.ISOTimeParser;
 import edu.sc.seis.seisFile.mseed.Blockette;
 import edu.sc.seis.seisFile.mseed.Blockette100;
 import edu.sc.seis.seisFile.mseed.Blockette1000;
@@ -30,7 +31,6 @@ import edu.sc.seis.seisFile.mseed.DataRecord;
 import edu.sc.seis.seisFile.mseed.SeedFormatException;
 import edu.sc.seis.seisFile.mseed.SeedRecord;
 import edu.sc.seis.sod.model.common.FissuresException;
-import edu.sc.seis.sod.model.common.ISOTime;
 import edu.sc.seis.sod.model.common.ParameterRef;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
@@ -515,7 +515,7 @@ public class FissuresConvert {
             xData[i] = i/2;
         }
         Plottable pData = new Plottable(xData, yData);
-        int pixelsPerDay = Math.round((float)(DAY.divideBy(seis.getSampling().getPeriod()).getValue(UnitImpl.DIMENSIONLESS)/2));
+        int pixelsPerDay = Math.round(((float)DAY.toNanos() / seis.getSampling().getPeriod().toNanos()/2));
         IntRange seisPixelRange = SimplePlotUtil.getDayPixelRange(seis,
                                                    pixelsPerDay,
                                                    seis.getBeginTime());
@@ -615,7 +615,7 @@ public class FissuresConvert {
      */
     public static String getISOTime(Btime startStruct) {
         float fSecond = startStruct.sec + startStruct.tenthMilli / 10000f;
-        return ISOTime.getISOString(startStruct.year,
+        return ISOTimeParser.getISOString(startStruct.year,
                                                             startStruct.jday,
                                                             startStruct.hour,
                                                             startStruct.min,

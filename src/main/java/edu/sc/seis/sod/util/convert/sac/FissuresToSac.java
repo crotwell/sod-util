@@ -3,8 +3,6 @@ package edu.sc.seis.sod.util.convert.sac;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Calendar;
-import java.util.TimeZone;
 
 import edu.iris.dmc.seedcodec.CodecException;
 import edu.sc.seis.seisFile.TimeUtils;
@@ -16,7 +14,6 @@ import edu.sc.seis.seisFile.sac.SacPoleZero;
 import edu.sc.seis.seisFile.sac.SacTimeSeries;
 import edu.sc.seis.sod.model.common.DistAz;
 import edu.sc.seis.sod.model.common.FissuresException;
-import edu.sc.seis.sod.model.common.ISOTime;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
 import edu.sc.seis.sod.model.common.UnitImpl;
@@ -219,14 +216,13 @@ public class FissuresToSac {
 	}
 
     public static void setKZTime(SacHeader header, Instant date) {
-		Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-		cal.setTime(date);
-		header.setNzyear( cal.get(Calendar.YEAR));
-		header.setNzjday( cal.get(Calendar.DAY_OF_YEAR));
-		header.setNzhour( cal.get(Calendar.HOUR_OF_DAY));
-		header.setNzmin( cal.get(Calendar.MINUTE));
-		header.setNzsec( cal.get(Calendar.SECOND));
-		header.setNzmsec( cal.get(Calendar.MILLISECOND));
+        ZonedDateTime zdt = ZonedDateTime.ofInstant(date, TimeUtils.TZ_UTC);
+		header.setNzyear( zdt.getYear());
+		header.setNzjday( zdt.getDayOfYear());
+		header.setNzhour( zdt.getHour());
+		header.setNzmin( zdt.getMinute());
+		header.setNzsec( zdt.getSecond());
+		header.setNzmsec( zdt.getNano() / TimeUtils.NANOS_IN_MILLI );
 	}
 
 	public static SacPoleZero getPoleZero(Response response)
