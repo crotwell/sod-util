@@ -72,9 +72,8 @@ public class FissuresToSac {
 		SacHeader header = SacHeader.createEmptyEvenSampledTimeSeriesHeader();
 		header.setIztype( SacConstants.IB);
 		SamplingImpl samp = (SamplingImpl) seis.sampling_info;
-		QuantityImpl period = samp.getPeriod();
-		period = period.convertTo(UnitImpl.SECOND);
-		float f = (float) period.get_value();
+		Duration period = samp.getPeriod();
+		float f = (float) TimeUtils.durationToDoubleSeconds(period);
 		header.setDelta( f);
 
 		UnitImpl yUnit = (UnitImpl) seis.y_unit;
@@ -205,9 +204,8 @@ public class FissuresToSac {
 		Instant beginTime = isoTime.toInstant();
 		Instant originTime = origin.getOriginTime();
 		setKZTime(header, originTime);
-		Duration sacBMarker =  beginTime.subtract(originTime);
-		sacBMarker =  sacBMarker.convertTo(UnitImpl.SECOND);
-		header.setB( (float) sacBMarker.getValue());
+		Duration sacBMarker =  Duration.between(originTime, beginTime);
+		header.setB( (float) TimeUtils.durationToDoubleSeconds(sacBMarker));
 		header.setO( 0);
 		header.setIztype( SacConstants.IO);
 		if (origin.getMagnitudes().length > 0) {

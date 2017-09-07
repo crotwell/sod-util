@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import edu.sc.seis.seisFile.TimeUtils;
 import edu.sc.seis.sod.model.common.FissuresException;
 import edu.sc.seis.sod.model.common.TimeRange;
 import edu.sc.seis.sod.model.common.UnitImpl;
@@ -350,7 +351,7 @@ public class ReduceTool {
             TimeRange fullRange = new TimeRange(chunk.getTimeRange(),
                                                                       chunk2.getTimeRange());
             int samples = (int)Math.floor(chunk.getPixelsPerDay() * 2
-                    * fullRange.getInterval().convertTo(UnitImpl.DAY).getValue());
+                    * TimeUtils.durationToFloatDays(fullRange.getInterval()));
             int[] y = new int[samples];
             fill(fullRange, y, chunk);
             fill(fullRange, y, chunk2);
