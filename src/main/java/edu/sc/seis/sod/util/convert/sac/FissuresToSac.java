@@ -10,7 +10,6 @@ import edu.sc.seis.seisFile.fdsnws.stationxml.Channel;
 import edu.sc.seis.seisFile.sac.Complex;
 import edu.sc.seis.seisFile.sac.SacConstants;
 import edu.sc.seis.seisFile.sac.SacHeader;
-import edu.sc.seis.seisFile.sac.SacPoleZero;
 import edu.sc.seis.seisFile.sac.SacTimeSeries;
 import edu.sc.seis.sod.model.common.DistAz;
 import edu.sc.seis.sod.model.common.FissuresException;
@@ -19,14 +18,6 @@ import edu.sc.seis.sod.model.common.SamplingImpl;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.event.OriginImpl;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
-import edu.sc.seis.sod.model.station.Filter;
-import edu.sc.seis.sod.model.station.FilterType;
-import edu.sc.seis.sod.model.station.Instrumentation;
-import edu.sc.seis.sod.model.station.InvalidResponse;
-import edu.sc.seis.sod.model.station.PoleZeroFilter;
-import edu.sc.seis.sod.model.station.Response;
-import edu.sc.seis.sod.model.station.Stage;
-import edu.sc.seis.sod.model.station.TransferType;
 
 /**
  * FissuresToSac.java
@@ -223,82 +214,6 @@ public class FissuresToSac {
 		header.setNzmsec( zdt.getNano() / TimeUtils.NANOS_IN_MILLI );
 	}
 
-	public static SacPoleZero getPoleZero(Response response)
-			throws InvalidResponse {
-		Instrumentation.repairResponse(response);
-		Instrumentation.checkResponse(response);
-		Stage stage = response.stages[0];
-		Filter filter = stage.filters[0];
-		if (filter.discriminator().value() != FilterType._POLEZERO) {
-			throw new IllegalArgumentException("Unexpected response type "
-					+ filter.discriminator().value());
-		}
-		PoleZeroFilter pz = filter.pole_zero_filter();
-		int gamma = 0;
-		UnitImpl unit = (UnitImpl) stage.input_units;
-        QuantityImpl scaleUnit = new QuantityImpl(1, unit);
-		if (unit.isConvertableTo(UnitImpl.METER)) {
-            gamma = 0;
-            scaleUnit = scaleUnit.convertTo(UnitImpl.METER);
-        } else if (unit.isConvertableTo(UnitImpl.METER_PER_SECOND)) {
-            gamma = 1;
-            scaleUnit = scaleUnit.convertTo(UnitImpl.METER_PER_SECOND);
-        } else if (unit.isConvertableTo(UnitImpl.METER_PER_SECOND_PER_SECOND)) {
-			gamma = 2;
-            scaleUnit = scaleUnit.convertTo(UnitImpl.METER_PER_SECOND_PER_SECOND);
-		} else {
-		    throw new IllegalArgumentException("response unit is not displacement, velocity or acceleration: "+unit);
-		}
-		int num_zeros = pz.zeros.length + gamma;
-		double mulFactor = 1;
-		if (stage.type == TransferType.ANALOG) {
-			mulFactor = 2 * Math.PI;
-		}
-		Complex[] zeros = SacPoleZero.initCmplx(num_zeros);
-		for (int i = 0; i < pz.zeros.length; i++) {
-			zeros[i] = new Complex(pz.zeros[i].real * mulFactor,
-					pz.zeros[i].imaginary * mulFactor);
-		}
-		Complex[] poles = SacPoleZero.initCmplx(pz.poles.length);
-		for (int i = 0; i < pz.poles.length; i++) {
-			poles[i] = new Complex(pz.poles[i].real * mulFactor,
-					pz.poles[i].imaginary * mulFactor);
-		}
-		float constant = stage.the_normalization[0].ao_normalization_factor;
-		double sd = response.the_sensitivity.sensitivity_factor;
-		double fs = response.the_sensitivity.frequency;
-		sd *= Math.pow(2 * Math.PI * fs, gamma);
-		double A0 = stage.the_normalization[0].ao_normalization_factor;
-		double fn = stage.the_normalization[0].normalization_freq;
-		A0 = A0 / Math.pow(2 * Math.PI * fn, gamma);
-		if (stage.type == TransferType.ANALOG) {
-			A0 *= Math.pow(2 * Math.PI, pz.poles.length - pz.zeros.length);
-		}
-		if (poles.length == 0 && zeros.length == 0) {
-			constant = (float) (sd * A0);
-		} else {
-			constant = (float) (sd * calc_A0(poles, zeros, fs));
-		}
-		constant *= scaleUnit.getValue();
-		return new SacPoleZero(poles, zeros, constant);
-	}
-	
-	private static double calc_A0(Complex[] poles, Complex[] zeros, double ref_freq) {
-		int i;
-		Complex numer = ONE;
-		Complex denom = ONE;
-		Complex f0;
-		double a0;
-		f0 = new Complex(0, 2 * Math.PI * ref_freq);
-		for (i = 0; i < zeros.length; i++) {
-			denom = Complex.mul(denom, Complex.sub(f0, zeros[i]));
-		}
-		for (i = 0; i < poles.length; i++) {
-			numer = Complex.mul(numer, Complex.sub(f0, poles[i]));
-		}
-		a0 = Complex.div(numer, denom).mag();
-		return a0;
-	}
 
 	private static Complex ONE = new Complex(1,0);
 
