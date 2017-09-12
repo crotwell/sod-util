@@ -9,13 +9,14 @@ import edu.sc.seis.seisFile.sac.Complex;
 import edu.sc.seis.seisFile.sac.SacPoleZero;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.UnitImpl;
+import edu.sc.seis.sod.model.common.UnknownUnit;
 import edu.sc.seis.sod.util.convert.stationxml.StationXMLToFissures;
 
 public class StationXMLToSacPoleZero {
 
     /** converts to Sac PoleZero from a StationXML Response. 
      * @throws StationXMLException on bad unit conversion*/
-    public static SacPoleZero convert(Response response) throws StationXMLException {
+    public static SacPoleZero convert(Response response) throws UnknownUnit {
         ResponseStage first = response.getFirstStage();
         if (first.getResponseItem() instanceof PolesZeros) {
             throw new IllegalArgumentException("First Stage is not PolesZeros: "+first.getResponseItem().getClass().getSimpleName());

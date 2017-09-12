@@ -5,20 +5,20 @@ import java.time.Instant;
 
 import edu.sc.seis.seisFile.TimeUtils;
 import edu.sc.seis.seisFile.fdsnws.stationxml.FloatType;
-import edu.sc.seis.seisFile.fdsnws.stationxml.StationXMLException;
 import edu.sc.seis.seisFile.fdsnws.stationxml.Unit;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.UnitBase;
 import edu.sc.seis.sod.model.common.UnitImpl;
+import edu.sc.seis.sod.model.common.UnknownUnit;
 
 public class StationXMLToFissures {
 
 
-    public static QuantityImpl convertFloatType(FloatType val) throws StationXMLException {
+    public static QuantityImpl convertFloatType(FloatType val) throws UnknownUnit {
         return new QuantityImpl(val.getValue(), convertUnit(val.getUnit(), ""));
     }
 
-    public static UnitImpl convertUnit(Unit unit) throws StationXMLException {
+    public static UnitImpl convertUnit(Unit unit) throws UnknownUnit {
         String unitString;
         if (unit.getName().indexOf(" - ") != -1) {
             unitString = unit.getName().substring(0, unit.getName().indexOf(" - ")).trim();
@@ -28,12 +28,12 @@ public class StationXMLToFissures {
         }
         if (unitString.length() == 0) {
             // no unit, probably means unknown response
-            throw new StationXMLException("Unknown unit: "+unit.getName()+" "+unit.getDescription());
+            throw new UnknownUnit(unit);
         }
         return convertUnit(unitString, unit.getDescription());
     }
 
-    public static UnitImpl convertUnit(String unitString, String unitDescription) throws StationXMLException {
+    public static UnitImpl convertUnit(String unitString, String unitDescription) throws UnknownUnit {
         if (unitDescription == null) {
             unitDescription = "";
         }
@@ -128,7 +128,7 @@ public class StationXMLToFissures {
             try {
                 return UnitImpl.getUnitFromString(unitString);
             } catch(NoSuchFieldException e) {
-                throw new StationXMLException("Unknown unit: '" + unitString + "' described as "+unitDescription);
+                throw new UnknownUnit("Unknown unit: '" + unitString + "' described as "+unitDescription);
             }
         }
     }
