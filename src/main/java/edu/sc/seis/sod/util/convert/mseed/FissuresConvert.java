@@ -467,8 +467,6 @@ public class FissuresConvert {
                                        UnitImpl.COUNT,
                                        channelId,
                                        new ParameterRef[0],
-                                       new QuantityImpl[0],
-                                       new SamplingImpl[0],
                                        bits);
     }
     
