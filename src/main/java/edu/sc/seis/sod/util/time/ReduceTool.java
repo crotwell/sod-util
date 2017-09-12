@@ -76,11 +76,11 @@ public class ReduceTool {
     public static List<RequestFilter> trimTo(List<RequestFilter> rfList, List<RequestFilter> windowList) {
         List<RequestFilter> out = new ArrayList<RequestFilter>();
         for (RequestFilter window : windowList) {
-            Instant windowStart = window.start_time;
-            Instant windowEnd = window.end_time;
+            Instant windowStart = window.startTime;
+            Instant windowEnd = window.endTime;
             for (RequestFilter rf : rfList) {
-                Instant rfStart = rf.start_time;
-                Instant rfEnd = rf.end_time;
+                Instant rfStart = rf.startTime;
+                Instant rfEnd = rf.endTime;
                 if ((rfStart.isAfter(windowStart) || rfStart.equals(windowStart))
                         && (rfEnd.isBefore(windowEnd) || rfEnd.equals(windowEnd))) {
                     // good, totally contained
@@ -97,7 +97,7 @@ public class ReduceTool {
                     if (rfEnd.isAfter(windowEnd)) {
                         rfEnd = windowEnd;
                     }
-                    out.add(new RequestFilter(rf.channel_id, rfStart, rfEnd));
+                    out.add(new RequestFilter(rf.channelId, rfStart, rfEnd));
                 }
             }
         }
@@ -202,11 +202,11 @@ public class ReduceTool {
             RequestFilter orig = (RequestFilter)one;
             TimeRange tr = new TimeRange(toMSTR(one),
                                                                toMSTR(two));
-            return new RequestFilter(orig.channel_id, tr.getBeginTime(), tr.getEndTime());
+            return new RequestFilter(orig.channelId, tr.getBeginTime(), tr.getEndTime());
         }
 
         protected String getChannelString(Object rf) {
-            return ChannelIdUtil.toStringNoDates(((RequestFilter)rf).channel_id);
+            return ChannelIdUtil.toStringNoDates(((RequestFilter)rf).channelId);
         }
 
         public boolean shouldMerge(Object one, Object two) {

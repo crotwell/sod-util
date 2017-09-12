@@ -130,11 +130,11 @@ public class RangeTool {
         if(seis.length == 0) {
             return ZERO_TIME;
         }
-        Instant beginTime = SortTool.byBeginTimeAscending(seis)[0].start_time;
+        Instant beginTime = SortTool.byBeginTimeAscending(seis)[0].startTime;
         Instant endTime = beginTime;
         for(int i = 0; i < seis.length; i++) {
-            if(seis[i].end_time.isAfter(endTime)) {
-                endTime = seis[i].end_time;
+            if(seis[i].endTime.isAfter(endTime)) {
+                endTime = seis[i].endTime;
             }
         }
         return new TimeRange(beginTime, endTime);

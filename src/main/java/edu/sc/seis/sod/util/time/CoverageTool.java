@@ -55,8 +55,8 @@ public class CoverageTool {
         timeRanges = ReduceTool.merge(timeRanges);
         timeRanges = SortTool.byBeginTimeAscending(timeRanges);
         for(int i = 0; i < filters.length; i++) {
-            Instant rfStart = filters[i].start_time;
-            Instant rfEnd = filters[i].end_time;
+            Instant rfStart = filters[i].startTime;
+            Instant rfEnd = filters[i].endTime;
             for(int j = 0; j < timeRanges.length; j++) {
                 Instant trStart = timeRanges[j].getBeginTime();
                 Instant trEnd = timeRanges[j].getEndTime();
@@ -65,7 +65,7 @@ public class CoverageTool {
                         if(ReduceTool.equalsOrBefore(trStart, rfStart)) {
                             rfStart = trEnd;
                         } else {
-                            unsatisfied.add(new RequestFilter(filters[i].channel_id,
+                            unsatisfied.add(new RequestFilter(filters[i].channelId,
                                                               rfStart,
                                                               trStart));
                             rfStart = trEnd;
@@ -77,7 +77,7 @@ public class CoverageTool {
                 }
             }
             if(rfEnd.isAfter(rfStart)) {
-                unsatisfied.add(new RequestFilter(filters[i].channel_id,
+                unsatisfied.add(new RequestFilter(filters[i].channelId,
                                                   rfStart,
                                                   rfEnd));
             }
