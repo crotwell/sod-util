@@ -10,6 +10,8 @@ import edu.sc.seis.sod.model.common.UnsupportedFormat;
 import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
 import edu.sc.seis.sod.model.seismogram.PlottableChunk;
 import edu.sc.seis.sod.model.seismogram.RequestFilter;
+import edu.sc.seis.sod.model.seismogram.RequestFilterUtil;
+import edu.sc.seis.sod.model.station.ChannelIdUtil;
 
 /**
  * @author groves Created on Oct 28, 2004
@@ -101,6 +103,15 @@ public class RangeTool {
         TimeRange twoTr = new TimeRange(two.getBeginTime(),
                                                               two.getEndTime());
         return areOverlapping(oneTr, twoTr);
+    }
+    
+
+    public static boolean seisPartOfRequest(RequestFilter rf, LocalSeismogramImpl seis) {
+        if (RequestFilterUtil.containsWildcard(rf)) {
+            throw new IllegalArgumentException("RequestFilter must not contain wildcards: "+RequestFilterUtil.toString(rf));
+        }
+        return ChannelIdUtil.areEqualExceptForBeginTime(rf.getChannelId(), seis.getChannelID()) 
+                && RangeTool.areOverlapping(new TimeRange(rf), new TimeRange(seis));
     }
 
     /**
