@@ -8,7 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-
+@Deprecated
 public class ThreadSafeSimpleDateFormat extends DateFormat {
 
     public ThreadSafeSimpleDateFormat(String format) {
