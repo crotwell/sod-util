@@ -112,6 +112,9 @@ public class ParseRegions {
             ClassLoader loader = getClass().getClassLoader();
             InputStream fstream =
                 loader.getResourceAsStream(FE_REGION_PROP);
+            if (fstream == null) {
+                throw new RuntimeException("Cannot load FE regions from "+FE_REGION_PROP+", stream is null");
+            }
             Properties feProps = new Properties();
             feProps.load(fstream);
             for (int i = 1; i < NUM_SEISMIC_REGIONS + 1; i++) {
@@ -130,7 +133,7 @@ public class ParseRegions {
         } // end of catch
     }
     
-    public static final String FE_REGION_PROP = "edu/sc/seis/fissuresUtil/display/FERegions.prop";
+    public static final String FE_REGION_PROP = "edu/sc/seis/sod/util/display/FERegions.prop";
 
     public static final int NUM_SEISMIC_REGIONS = 50;
     public static final int NUM_GEOGRAPHIC_REGIONS = 757;
