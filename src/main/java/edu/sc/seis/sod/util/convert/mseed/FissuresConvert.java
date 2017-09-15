@@ -612,16 +612,12 @@ public class FissuresConvert {
      * @return the value of start time in ISO format
      */
     public static String getISOTime(Btime startStruct) {
-        float fSecond = startStruct.sec + startStruct.tenthMilli / 10000f;
-        return ISOTimeParser.getISOString(startStruct.year,
-                                                            startStruct.jday,
-                                                            startStruct.hour,
-                                                            startStruct.min,
-                                                            fSecond);
+        return startStruct.toInstant().toString();
     }
     
     
     public static Instant getZonedDateTime(Btime startStruct) {
+        Instant i = startStruct.toInstant();
         ZonedDateTime out = ZonedDateTime.of(startStruct.year,
                                              Month.JANUARY.getValue(),
                                              1,
