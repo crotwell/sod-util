@@ -3,15 +3,17 @@
  */
 package edu.sc.seis.sod.util.display;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 
+import javax.swing.text.DateFormatter;
+
+import edu.sc.seis.seisFile.TimeUtils;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.event.CacheEvent;
@@ -124,7 +126,7 @@ public class EventUtil {
     public static String getEventInfo(CacheEvent event, String format) {
         return getEventInfo(event,
                             format,
-                            new SimpleDateFormat("MM/dd/yyyy HH:mm:ss z"));
+                            TimeUtils.createFormatter("MM/dd/yyyy HH:mm:ss z"));
     }
 
     /**
@@ -138,7 +140,7 @@ public class EventUtil {
      */
     public static String getEventInfo(CacheEvent event,
                                       String format,
-                                      DateFormat sdf) {
+                                      DateTimeFormatter sdf) {
         OriginImpl origin = extractOrigin(event);
         StringBuffer buf = new StringBuffer(format);
         int index = buf.indexOf(LOC);
@@ -163,16 +165,15 @@ public class EventUtil {
     public static String getOriginInfo(OriginImpl origin, String format) {
         return getOriginInfo(origin,
                              format,
-                             new SimpleDateFormat("MM/dd/yyyy HH:mm:ss z"));
+                             TimeUtils.createFormatter("MM/dd/yyyy HH:mm:ss z"));
     }
 
     public static String getOriginInfo(OriginImpl origin,
                                        String format,
-                                       DateFormat sdf) {
+                                       DateTimeFormatter sdf) {
         // Get Date and format it accordingly
         Instant msd = origin.getOriginTime();
-        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-        String originTimeString = sdf.format(msd);
+        String originTimeString = msd.toString();
         // Get Magnitude
         float mag = Float.NaN;
         if(origin.getMagnitudes().length > 0) {
