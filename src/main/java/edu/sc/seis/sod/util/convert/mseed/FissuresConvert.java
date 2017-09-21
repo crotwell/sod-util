@@ -12,7 +12,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.Month;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -20,7 +19,6 @@ import java.util.List;
 
 import edu.iris.dmc.seedcodec.B1000Types;
 import edu.sc.seis.seisFile.TimeUtils;
-import edu.sc.seis.seisFile.client.ISOTimeParser;
 import edu.sc.seis.seisFile.mseed.Blockette;
 import edu.sc.seis.seisFile.mseed.Blockette100;
 import edu.sc.seis.seisFile.mseed.Blockette1000;
@@ -35,7 +33,6 @@ import edu.sc.seis.sod.model.common.ParameterRef;
 import edu.sc.seis.sod.model.common.QuantityImpl;
 import edu.sc.seis.sod.model.common.SamplingImpl;
 import edu.sc.seis.sod.model.common.TimeRange;
-import edu.sc.seis.sod.model.common.ToDoException;
 import edu.sc.seis.sod.model.common.UnitBase;
 import edu.sc.seis.sod.model.common.UnitImpl;
 import edu.sc.seis.sod.model.seismogram.EncodedData;
@@ -432,7 +429,7 @@ public class FissuresConvert {
                 throw new RuntimeException("encoded data is null " + j);
             }
             seis.append_encoded(edata[j]);
-            Instant drEnd = getZonedDateTime(seed.getLastSampleBtime());
+            Instant drEnd = seed.getLastSampleBtime().toInstant();
             seis.sampling_info = new SamplingImpl(seis.getNumPoints()-1, Duration.between(seis.getBeginTime(), drEnd));
         }
         return seis;
@@ -617,18 +614,7 @@ public class FissuresConvert {
     
     
     public static Instant getZonedDateTime(Btime startStruct) {
-        Instant i = startStruct.toInstant();
-        ZonedDateTime out = ZonedDateTime.of(startStruct.year,
-                                             Month.JANUARY.getValue(),
-                                             1,
-                                             startStruct.hour,
-                                             startStruct.min,
-                                             startStruct.sec,
-                                             startStruct.tenthMilli*100000,
-                                             TimeUtils.TZ_UTC);
-        out = out.plusDays(startStruct.jday-1);
-        throw new ToDoException("leap seconds");
-        //return out.toInstant();
+        return startStruct.toInstant();
     }
 
     public static Btime getBtime(Instant date) {
@@ -644,7 +630,7 @@ public class FissuresConvert {
     }
     
     public static TimeRange getTimeRange(BtimeRange bTime) {
-        return new TimeRange(getZonedDateTime(bTime.getBegin()), getZonedDateTime(bTime.getEnd()));
+        return new TimeRange(bTime.getBegin().toInstant(), bTime.getEnd().toInstant());
     }
 
     public static final byte RECORD_SIZE_4096_POWER = 12;
