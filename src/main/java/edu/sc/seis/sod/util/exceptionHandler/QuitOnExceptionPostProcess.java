@@ -2,10 +2,10 @@ package edu.sc.seis.sod.util.exceptionHandler;
 
 public class QuitOnExceptionPostProcess implements PostProcess {
 
-    public QuitOnExceptionPostProcess(Class c) {
+    public QuitOnExceptionPostProcess(Class<? extends Throwable> c) {
         this(c, 1);
     }
-    public QuitOnExceptionPostProcess(Class c, int processResult) {
+    public QuitOnExceptionPostProcess(Class<? extends Throwable> c, int processResult) {
         quitType = c;
         this.processResult = processResult;
     }
@@ -22,7 +22,7 @@ public class QuitOnExceptionPostProcess implements PostProcess {
     
     int processResult;
 
-    Class quitType;
+    Class<? extends Throwable> quitType;
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(QuitOnExceptionPostProcess.class);
 }
