@@ -23,8 +23,8 @@ dependencies {
   implementation("javamailUSC:javamail:1.3.2")
   implementation("activationUSC:activation:1.0.2")
   implementation("com.isti:isti.util:20120201")
-  implementation( "org.slf4j:slf4j-api:1.7.26")
-  implementation( "org.slf4j:slf4j-log4j12:1.7.26")
+  implementation( "org.slf4j:slf4j-api:1.7.30")
+  implementation( "org.slf4j:slf4j-log4j12:1.7.30")
   testImplementation(project(":sod-mock"))
       // Use JUnit Jupiter API for testing.
       testImplementation("org.junit.jupiter:junit-jupiter-api:5.5.1")
