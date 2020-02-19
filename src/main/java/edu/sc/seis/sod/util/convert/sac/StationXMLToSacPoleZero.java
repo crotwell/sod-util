@@ -44,7 +44,8 @@ public class StationXMLToSacPoleZero {
             mulFactor = 2 * Math.PI;
         }
         Complex[] zeros = SacPoleZero.initCmplx(num_zeros);
-        for (int i = 0; i < zeros.length; i++) {
+        // extra gamma zeros are all (0,0)
+        for (int i = 0; i < polesZeros.getZeroList().size(); i++) {
             zeros[i] = new Complex(polesZeros.getZeroList().get(i).getReal() * mulFactor,
                                    polesZeros.getZeroList().get(i).getImaginary() * mulFactor);
         }
