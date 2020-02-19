@@ -17,14 +17,6 @@ public class DefaultExtractor implements Extractor {
 
     public String extract(Throwable throwable) {
         String traceString = "";
-        if(throwable instanceof FissuresException) {
-            traceString += "Description: "
-                    + ((FissuresException)throwable).the_error.error_description
-                    + "\n";
-            traceString += "Error Code: "
-                    + ((FissuresException)throwable).the_error.error_code
-                    + "\n";
-        }
         if(throwable instanceof SQLException) {
             traceString += "SQLState: "
                     + ((SQLException)throwable).getSQLState() + '\n';
