@@ -89,6 +89,7 @@ public class ClockUtil {
         return TimeUtils.wayPast;
     }
     
+    /** see future in TimeUtils in seisFile */
     @Deprecated
     public static Instant wayFuture() {
         return TimeUtils.future;
