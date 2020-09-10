@@ -27,8 +27,6 @@ dependencies {
   implementation("edu.sc.seis:seedCodec:1.0.11")
   implementation("edu.sc.seis:seisFile:1.7.4")
   implementation("edu.sc.seis:sod-model:4.0.0-SNAPSHOT")
-  implementation("javamailUSC:javamail:1.3.2")
-  implementation("activationUSC:activation:1.0.2")
   implementation("com.isti:isti.util:20120201")
   implementation( "org.slf4j:slf4j-api:1.7.30")
   implementation( "org.slf4j:slf4j-log4j12:1.7.30")
