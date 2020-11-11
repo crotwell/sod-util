@@ -3,7 +3,8 @@
 plugins {
     // Apply the java-library plugin to add support for Java Library
     `java-library`
-    eclipse
+    `eclipse`
+    `maven-publish`
 }
 
 group = "edu.sc.seis"
@@ -45,4 +46,14 @@ configurations.all {
     substitute(module("edu.sc.seis:seisFile")).with(project(":seisFile"))
     substitute(module("edu.sc.seis:seedCodec")).with(project(":seedCodec"))
   }
+}
+
+
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+        }
+    }
 }
