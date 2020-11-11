@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  * the option of saving the exception stack trace along with other useful
  * information added by the user. Created: Thu Jan 31 16:39:57 2002
  * 
- * @author <a href="mailto:">Srinivasa Telukutla </a>
+ * @author Srinivasa Telukutla 
  * @version
  */
 public class GUIReporter implements ExceptionReporter {

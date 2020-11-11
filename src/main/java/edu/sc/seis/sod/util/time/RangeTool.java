@@ -115,7 +115,7 @@ public class RangeTool {
     }
 
     /**
-     * @returns A time range encompassing the earliest begin time of the passed
+     * @return A time range encompassing the earliest begin time of the passed
      *          in seismograms to the latest end time
      */
     public static TimeRange getFullTime(LocalSeismogramImpl[] seis) {
@@ -134,7 +134,7 @@ public class RangeTool {
 
 
     /**
-     * @returns A time range encompassing the earliest begin time of the passed
+     * @return A time range encompassing the earliest begin time of the passed
      *          in request filter to the latest end time
      */
     public static TimeRange getFullTime(RequestFilter[] seis) {

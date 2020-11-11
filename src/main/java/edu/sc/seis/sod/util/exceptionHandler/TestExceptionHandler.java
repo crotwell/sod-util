@@ -7,7 +7,7 @@ package edu.sc.seis.sod.util.exceptionHandler;
  *
  * Created: Thu Jan 31 17:03:09 2002
  *
- * @author <a href="mailto:">Srinivasa Telukutla</a>
+ * @author Srinivasa Telukutla
  * @version
  */
 

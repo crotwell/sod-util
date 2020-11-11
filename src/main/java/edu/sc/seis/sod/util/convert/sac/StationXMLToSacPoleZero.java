@@ -15,7 +15,9 @@ import edu.sc.seis.sod.util.convert.stationxml.StationXMLToFissures;
 public class StationXMLToSacPoleZero {
 
     /** converts to Sac PoleZero from a StationXML Response. 
-     * @throws StationXMLException on bad unit conversion*/
+     * 
+     * @throws UnknownUnit on bad unit conversion
+     * */
     public static SacPoleZero convert(Response response) throws UnknownUnit {
         ResponseStage first = response.getFirstStage();
         if (first.getResponseItem() instanceof PolesZeros) {

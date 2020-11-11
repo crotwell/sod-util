@@ -48,7 +48,7 @@ public class ChoiceDecimalFormat extends NumberFormat {
     }
 
     /**
-     * This creates a ChoiceDecimalFormat where numbers < 100 have a single decimal, and numbers >=100
+     * This creates a ChoiceDecimalFormat where numbers &lt; 100 have a single decimal, and numbers $gt;=100
      *  have none
      */
     public static ChoiceDecimalFormat createTomStyleA() {
@@ -58,7 +58,7 @@ public class ChoiceDecimalFormat extends NumberFormat {
     }
 
     /**
-     * This creates a ChoiceDecimalFormat where numbers < 10 have a single decimal, and numbers >=10
+     * This creates a ChoiceDecimalFormat where numbers &lt; 10 have a single decimal, and numbers $gt;=10
      * have none
      */
     public static ChoiceDecimalFormat createTomStyleB() {

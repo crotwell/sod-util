@@ -25,7 +25,7 @@ import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
  * 
  * Created: Wed Apr 10 10:52:00 2002
  * 
- * @author <a href="mailto:">Philip Crotwell</a>
+ * @author Philip Crotwell
  * @version
  */
 
@@ -156,8 +156,8 @@ public class FissuresToSac {
 	 * Adds the Channel information, including station location and channel
 	 * orientation to the sac object.
 	 * 
-	 * @param sac
-	 *            a <code>SacTimeSeries</code> object to be modified
+	 * @param header
+	 *            a <code>SacTimeSeries</code> header object to be modified
 	 * @param channel
 	 *            a <code>Channel</code>
 	 */
@@ -176,8 +176,8 @@ public class FissuresToSac {
 	/**
 	 * Adds origin informtion to the sac object, including the o marker.
 	 * 
-	 * @param sac
-	 *            a <code>SacTimeSeries</code> object to be modified
+	 * @param header
+	 *            a <code>SacTimeSeries</code> header object to be modified
 	 * @param origin
 	 *            an <code>Origin</code> value
 	 */

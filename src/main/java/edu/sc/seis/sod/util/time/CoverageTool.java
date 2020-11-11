@@ -14,7 +14,7 @@ import edu.sc.seis.sod.model.seismogram.RequestFilter;
 public class CoverageTool {
 
     /**
-     * @returns an array containing the request filters taken from the
+     * @return an array containing the request filters taken from the
      *          <code>filters</code> array that are not completely covered by
      *          the given seismograms begin and end.
      */
@@ -32,7 +32,7 @@ public class CoverageTool {
     }
 
     /**
-     * @returns an array containing the request filters taken from the
+     * @return an array containing the request filters taken from the
      *          <code>filters</code> array that are not completely covered by
      *          the existing filters begin and end.
      */

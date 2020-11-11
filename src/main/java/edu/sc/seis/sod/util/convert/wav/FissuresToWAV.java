@@ -20,12 +20,12 @@ import edu.sc.seis.sod.model.seismogram.LocalSeismogramImpl;
 
 /**
  * FissuresToWAV.java
- * @see http://ccrma-www.stanford.edu/CCRMA/Courses/422/projects/WaveFormat/
+ *  http://ccrma-www.stanford.edu/CCRMA/Courses/422/projects/WaveFormat/
  *
  *
  * Created: Wed Feb 19 15:35:06 2003
  *
- * @author <a href="mailto:crotwell@owl.seis.sc.edu">Philip Crotwell</a>
+ * @author Philip Crotwell
  * @version 1.0
  */
 public class FissuresToWAV {

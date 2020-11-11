@@ -22,7 +22,7 @@ public class SortTool {
     }
 
     /**
-     * @returns the seismograms in order of begin time
+     * @return the seismograms in order of begin time
      */
     public static LocalSeismogramImpl[] byBeginTimeAscending(LocalSeismogramImpl[] seis) {
         Arrays.sort(seis, new SeisBeginSorter());

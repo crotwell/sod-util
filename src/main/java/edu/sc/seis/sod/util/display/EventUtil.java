@@ -116,7 +116,7 @@ public class EventUtil {
     }
 
     /**
-     * @ returns a string for the form "Event: Location | Time | Magnitude |
+     *  returns a string for the form "Event: Location | Time | Magnitude |
      *   Depth"
      */
     public static String getEventInfo(CacheEvent event) {
@@ -130,7 +130,7 @@ public class EventUtil {
     }
 
     /**
-     * @ formats a string for the given event. To insert information about a
+     *  formats a string for the given event. To insert information about a
      *   certain item magic strings are used in the format string Magic Strings
      *   LOC adds the location of the event TIME adds the event time MAG adds
      *   event magnitude DEPTH adds the depth For example the string "Event: " +
@@ -155,7 +155,7 @@ public class EventUtil {
     }
 
     /**
-     * @ returns a string for the form "Event: Location | Time | Magnitude |
+     *  returns a string for the form "Event: Location | Time | Magnitude |
      *   Depth"
      */
     public static String getOriginInfo(OriginImpl origin) {

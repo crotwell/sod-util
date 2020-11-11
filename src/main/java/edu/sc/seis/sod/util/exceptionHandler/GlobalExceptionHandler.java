@@ -178,7 +178,7 @@ public class GlobalExceptionHandler {
     /**
      * This supposedly sets a global exception handler in the awt thread only,
      * so that uncaught exceptions can be processed/saved/viewed. Will not
-     * necessarily work for future releases (> 1.4). Perhaps it will, perhaps
+     * necessarily work for future releases (&gt; 1.4). Perhaps it will, perhaps
      * not. NOTE: It does not work for exceptions in other threads. Java1.5 is
      * supposed to have a mechanism to do this.
      */
