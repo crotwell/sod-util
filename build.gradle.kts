@@ -20,13 +20,13 @@ java {
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
-    jcenter()
-    maven(url = "http://www.seis.sc.edu/software/maven2")
+    mavenCentral()
+    maven(url = "https://www.seis.sc.edu/software/maven2")
 }
 
 dependencies {
-  implementation("edu.sc.seis:seedCodec:1.0.11")
-  implementation("edu.sc.seis:seisFile:1.7.4")
+  implementation("edu.sc.seis:seedCodec:1.1.1")
+  implementation("edu.sc.seis:seisFile:2.0.0-SNAPSHOT")
   implementation("edu.sc.seis:sod-model:4.0.0-SNAPSHOT")
   implementation("com.isti:isti.util:20120201")
   implementation( "org.slf4j:slf4j-api:1.7.30")
@@ -47,6 +47,14 @@ configurations.all {
     substitute(module("edu.sc.seis:seedCodec")).with(project(":seedCodec"))
   }
 }
+
+
+
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+}
+
 
 
 
