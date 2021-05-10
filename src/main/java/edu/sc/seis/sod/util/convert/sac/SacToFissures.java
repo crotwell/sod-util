@@ -47,8 +47,7 @@ public class SacToFissures {
     public SacToFissures() {}
     
     public static LocalSeismogramImpl getSeismogram(File sacFile) throws FileNotFoundException, IOException, FissuresException {
-        SacTimeSeries sac = new SacTimeSeries();
-        sac.read(sacFile);
+        SacTimeSeries sac = SacTimeSeries.read(sacFile);
         return getSeismogram(sac);
     }
     
@@ -59,8 +58,7 @@ public class SacToFissures {
         } else {
             dis = new DataInputStream(in);
         }
-        SacTimeSeries sac = new SacTimeSeries();
-        sac.read(dis);
+        SacTimeSeries sac = SacTimeSeries.read(dis);
         return getSeismogram(sac);
     }
 

@@ -315,8 +315,8 @@ public class FissuresConvert {
         List<DataRecord> contiguous = new ArrayList<DataRecord>();
         DataRecord prev = null;
         for (DataRecord dr : seed) {
-            if (prev != null && ! RangeTool.areContiguous(FissuresConvert.getTimeRange(prev.getHeader().getBtimeRange()), 
-                                                          FissuresConvert.getTimeRange(dr.getHeader().getBtimeRange()),
+            if (prev != null && ! RangeTool.areContiguous(FissuresConvert.getTimeRange(prev.getBtimeRange()), 
+                                                          FissuresConvert.getTimeRange(dr.getBtimeRange()),
                                                           FissuresConvert.convertSampleRate(prev).getPeriod())) {
                 // probably should also check for chan match
                 LocalSeismogramImpl seis = FissuresConvert.toFissuresSeismogram(contiguous);
