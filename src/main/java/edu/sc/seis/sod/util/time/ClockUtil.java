@@ -133,6 +133,20 @@ public class ClockUtil {
         return d.toString();
     }
     
+    public static float floatSeconds(Duration d) {
+    	return (float) doubleSeconds(d);
+    }
+    
+    public static double doubleSeconds(Duration d) {
+    	return d.getSeconds()+d.getNano()/1000000000.0;
+    }
+    
+    public static Duration durationOfSeconds(double value) {
+    	long seconds = (long)Math.floor(value);
+    	long remainder = Math.round((value - seconds)*NANO);
+    	return Duration.ofSeconds(seconds, remainder);
+    }
+    
     public static Duration durationFrom(double value, UnitImpl unit) {
         QuantityImpl q = new QuantityImpl(value, unit);
         return Duration.ofNanos(Math.round(q.getValue(UnitImpl.NANOSECOND)));
@@ -141,6 +155,8 @@ public class ClockUtil {
     public static Duration durationFrom(QuantityImpl q) {
         return Duration.ofNanos(Math.round(q.getValue(UnitImpl.NANOSECOND)));
     }
+    
+    public static final long NANO = 1000000000;
     
     private static boolean warnServerFail = false;
 
